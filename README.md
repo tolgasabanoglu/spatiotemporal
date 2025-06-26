@@ -1,2 +1,1 @@
 # Spatiotemporal
-# spatiotemporal
