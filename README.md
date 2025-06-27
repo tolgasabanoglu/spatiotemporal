@@ -6,35 +6,35 @@ This project processes GPS tracks (from Google Maps or Garmin), biometric data (
 
 ---
 
-## 📦 Project Structure
+## 📁 Project Structure
 
-spatiotemporal/
-├── data/ # All datasets
-│ ├── raw/ # Raw data exports (e.g. GPX, JSON, CSV)
-│ ├── processed/ # Cleaned, merged data
-│ └── external/ # Environmental data like NDVI or elevation
-│
-├── notebooks/ # Jupyter Notebooks for exploration
-│ ├── 01_parse_location.ipynb
-│ ├── 02_ndvi_merge.ipynb
-│ ├── 03_health_merge.ipynb
-│ └── 04_visualize.ipynb
-│
-├── scripts/ # Automation scripts
-│ ├── parse_garmin.py
-│ ├── fetch_ndvi.py
-│ ├── fetch_elevation.py
-│ └── merge_all.py
-│
-├── config/ # Configuration and secrets
-│ └── config.yaml
-│
-├── env/ # Python environment setup
-│ └── environment.yml
-│
-├── .gitignore # Files and folders to exclude from Git
-├── requirements.txt # Python dependencies (for pip users)
-└── README.md # This file
+- `data/` — All datasets  
+  - `raw/` — Raw data exports (e.g. GPX, JSON, CSV)  
+  - `processed/` — Cleaned, merged data  
+  - `external/` — Environmental data (e.g. NDVI, elevation)
+
+- `notebooks/` — Jupyter notebooks for exploration  
+  - `01_parse_location.ipynb`  
+  - `02_ndvi_merge.ipynb`  
+  - `03_health_merge.ipynb`  
+  - `04_visualize.ipynb`
+
+- `scripts/` — Python automation scripts  
+  - `parse_garmin.py`  
+  - `fetch_ndvi.py`  
+  - `fetch_elevation.py`  
+  - `merge_all.py`
+
+- `config/` — Configuration and secrets  
+  - `config.yaml`
+
+- `env/` — Python environment setup  
+  - `environment.yml`
+
+- `.gitignore` — Files/folders to exclude from Git  
+- `requirements.txt` — Python dependencies (if using pip)  
+- `README.md` — Project overview and documentation
+
 
 
 ---
