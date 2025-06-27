@@ -58,7 +58,7 @@ This project includes a framework for **personal A/B testing** to analyze how di
 ### Examples:
 - Early walk vs. late walk → impact on stress
 - High NDVI (green space) vs. low NDVI → impact on mood or sleep
-- Caffeine cutoffs, bedtime shifts, elevation exposure, etc.
+- Bedtime shifts, elevation exposure, etc.
 
 ### A/B Testing Components:
 - Test plans in YAML: `experiments/ab_test_plan.yaml`
@@ -80,17 +80,11 @@ conda env create -f env/environment.yml
 conda activate spatiotemporal
 
 
-Example Output (Planned)
-
-date	lat	lon	steps	stress	ndvi	elevation
-2025-06-01	40.71	-74.00	12,345	35	0.67	12.3 m
+📊 Example Output (Planned)
+date	lat	lon	steps	stress	ndvi	elevation	sleep_score	body_battery
+2025-06-01	40.71	-74.00	12,345	35	0.67	12.3 m	85	74
 
 📍 Inspiration
-
-Chronobiology
-Human geography
-Digital lifelogging
-Nature-health connection research
 
 📚 To Do
  Implement Garmin parser
