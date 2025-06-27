@@ -84,7 +84,6 @@ conda activate spatiotemporal
 date	lat	lon	steps	stress	ndvi	elevation	sleep_score	body_battery
 2025-06-01	40.71	-74.00	12,345	35	0.67	12.3 m	85	74
 
-📍 Inspiration
 
 📚 To Do
  Implement Garmin parser
