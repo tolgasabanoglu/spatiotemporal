@@ -18,6 +18,8 @@ This project processes GPS tracks (from Google Maps or Garmin), biometric data (
   - `02_ndvi_merge.ipynb`  
   - `03_health_merge.ipynb`  
   - `04_visualize.ipynb`
+  - `05_ab_analysis.ipynb` — A/B test results and visuals
+
 
 - `scripts/` — Python automation scripts  
   - `parse_garmin.py`  
@@ -46,6 +48,23 @@ This project processes GPS tracks (from Google Maps or Garmin), biometric data (
 - Query NDVI and elevation data via Google Earth Engine
 - Aggregate all sources into daily summaries
 - Visualize movement and metrics with maps and charts
+
+---
+
+## 📊 A/B Testing
+
+This project includes a framework for **personal A/B testing** to analyze how different habits, routines, and environmental exposures affect key health metrics.
+
+### Examples:
+- Early walk vs. late walk → impact on stress
+- High NDVI (green space) vs. low NDVI → impact on mood or sleep
+- Caffeine cutoffs, bedtime shifts, elevation exposure, etc.
+
+### A/B Testing Components:
+- Test plans in YAML: `experiments/ab_test_plan.yaml`
+- Run interactively in: `notebooks/05_ab_analysis.ipynb`
+- Optional automation via: `scripts/run_ab_analysis.py`
+- Outputs: group stats, p-values, charts → saved in `experiments/results/`
 
 ---
 
@@ -78,3 +97,4 @@ Nature-health connection research
  Integrate Earth Engine NDVI
  Merge health + GPS + environment
  Visualize time-space-health patterns
+ Add more A/B test logic + UI
