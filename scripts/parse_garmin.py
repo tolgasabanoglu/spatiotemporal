@@ -35,14 +35,12 @@ fetchers = {
     "sleep": client.get_sleep_data,
     "stress": client.get_stress_data,
     "body_battery": client.get_body_battery,
-    "heart_rate": client.get_heart_rates,
-    "respiration": client.get_respiration_data,
-    "activities": client.get_activities,
+    "heart_rate": client.get_heart_rates
 }
 
 # ---- Date range: last 30 days ----
 today = datetime.date.today()
-start_date = today - datetime.timedelta(days=30)
+start_date = today - datetime.timedelta(days=90)
 
 print(f"\n📆 Fetching Garmin data from {start_date} to {today}\n")
 
