@@ -2,15 +2,17 @@ import os
 import json
 import datetime
 import time
-import yaml
 from garminconnect import Garmin
+from dotenv import load_dotenv  # pip install python-dotenv
 
-# ---- Load credentials from config.yaml ----
-with open("/Users/tolgasabanoglu/Desktop/github/spatiotemporal/config/config.yaml") as f:
-    creds = yaml.safe_load(f)
+# Load environment variables from .env file
+load_dotenv()
 
-EMAIL = creds["email"]
-PASSWORD = creds["password"]
+EMAIL = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
+
+if not EMAIL or not PASSWORD:
+    raise ValueError("Missing USERNAME or PASSWORD environment variables")
 
 # ---- Setup raw data directory ----
 raw_dir = "../data/raw/"
