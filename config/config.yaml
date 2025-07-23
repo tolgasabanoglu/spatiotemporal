@@ -1,2 +1,2 @@
-email: "tolgasabanoglu@gmail.com"
-password: "***REMOVED***"
+username: ${USERNAME}
+password: ${PASSWORD}
