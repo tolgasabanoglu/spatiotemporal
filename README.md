@@ -2,7 +2,7 @@
 
 A personal data analysis toolkit that integrates movement, health, and environmental context across space and time.
 
-This project processes GPS tracks (from Google Maps or Garmin), biometric data (steps, stress, sleep), and environmental layers (NDVI, elevation) to create enriched, daily spatiotemporal life summaries.
+This project processes GPS tracks (from Garmin), biometric data (steps, stress, sleep), and environmental layers (normalized difference vegetation index (NDVI)) to create enriched, daily spatiotemporal life summaries.
 
 ---
 
@@ -14,18 +14,12 @@ This project processes GPS tracks (from Google Maps or Garmin), biometric data (
   - `external/` — Environmental data (e.g. NDVI, elevation)
 
 - `notebooks/` — Jupyter notebooks for exploration  
-  - `01_parse_location.ipynb`  
-  - `02_ndvi_merge.ipynb`  
-  - `03_health_merge.ipynb`  
-  - `04_visualize.ipynb`
-  - `05_ab_analysis.ipynb` — A/B test results and visuals
+  - `analysis.ipynb` — fetching the data, A/B test and regression results and visuals
 
 
 - `scripts/` — Python automation scripts  
-  - `parse_garmin.py`  
-  - `fetch_ndvi.py`  
-  - `fetch_elevation.py`  
-  - `merge_all.py`
+  - `parse_garmin.py`   
+  - `run_ab_analysis.py`
 
 - `config/` — Configuration and secrets  
   - `config.yaml`
@@ -43,9 +37,9 @@ This project processes GPS tracks (from Google Maps or Garmin), biometric data (
 
 ## 🚀 Features
 
-- Parse location data from Garmin or Google Maps
+- Parse location data from Garmin
 - Import and process Garmin health metrics (steps, sleep, stress)
-- Query NDVI and elevation data via Google Earth Engine
+- Query NDVI via Google Earth Engine - or create synthetic ndvisß
 - Aggregate all sources into daily summaries
 - Visualize movement and metrics with maps and charts
 
@@ -56,9 +50,9 @@ This project processes GPS tracks (from Google Maps or Garmin), biometric data (
 This project includes a framework for **personal A/B testing** to analyze how different habits, routines, and environmental exposures affect key health metrics.
 
 ### Examples:
-- Early walk vs. late walk → impact on stress
-- High NDVI (green space) vs. low NDVI → impact on mood or sleep
-- Bedtime shifts, elevation exposure, etc.
+- Several biometrics variables → impact on stress
+- High NDVI (green space) vs. low NDVI → impact on average stress
+- Seasonal shifts, regression test, etc.
 
 ### A/B Testing Components:
 - Test plans in YAML: `experiments/ab_test_plan.yaml`
@@ -81,8 +75,8 @@ conda activate spatiotemporal
 
 
 📊 Example Output (Planned)
-date	lat	lon	steps	stress	ndvi	elevation	sleep_score	body_battery
-2025-06-01	40.71	-74.00	12,345	35	0.67	12.3 m	85	74
+date (weekly)		steps	avg_stress	mean_ndvi	sleep_score	body_battery
+2025-06-01 12,345	35	0.67	12.3 m	85	74
 
 
 📚 To Do
