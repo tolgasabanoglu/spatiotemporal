@@ -20,6 +20,8 @@ This project processes GPS tracks (from Garmin), biometric data (steps, stress, 
 - `scripts/` — Python automation scripts  
   - `parse_garmin.py`   
   - `run_ab_analysis.py`
+  - `load_to_bigquery.py` — Upload processed JSON data to BigQuery
+
 
 - `config/` — Configuration and secrets  
   - `config.yaml`
@@ -41,6 +43,7 @@ This project processes GPS tracks (from Garmin), biometric data (steps, stress, 
 - Import and process Garmin health metrics (steps, sleep, stress)
 - Query NDVI via Google Earth Engine - or create synthetic ndvisß
 - Aggregate all sources into daily summaries
+- Upload processed data to **BigQuery** for storage and querying
 - Visualize movement and metrics with maps and charts
 
 ---
