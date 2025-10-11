@@ -19,7 +19,6 @@ This project processes GPS tracks (from Garmin), biometric data (steps, stress, 
 
 - `scripts/` — Python automation scripts  
   - `parse_garmin.py`   
-  - `run_ab_analysis.py`
   - `load_to_bigquery.py` — Upload processed JSON data to BigQuery
 
 
@@ -83,8 +82,22 @@ date (weekly)		steps	avg_stress	mean_ndvi	sleep_score	body_battery
 
 
 📚 To Do
- Implement Garmin parser
- Integrate Earth Engine NDVI
- Merge health + GPS + environment
+ Implement Garmin parser (done)
+ Integrate Earth Engine NDVI (maybe generate synthetic ones)
+ Merge health + GPS + environment 
  Visualize time-space-health patterns
  Add more A/B test logic + UI
+
+# Steps for successful workflow:
+# Navigate and Activate
+cd /Users/tolgasabanoglu/Desktop/github/spatiotemporal
+source spatiotemporal_env/bin/activate
+
+# Run first script (parse data)
+python scripts/parse_garmin.py
+
+# Set credentials for Google Cloud services (like BigQuery)
+export GOOGLE_APPLICATION_CREDENTIALS="/Users/tolgasabanoglu/Desktop/github/spatiotemporal/spatiotemporal-key.json"
+
+# Run second script (load data to BigQuery)
+python scripts/load_to_bigquery.py
