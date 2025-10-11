@@ -88,16 +88,3 @@ date (weekly)		steps	avg_stress	mean_ndvi	sleep_score	body_battery
  Visualize time-space-health patterns
  Add more A/B test logic + UI
 
-# Steps for successful workflow:
-# Navigate and Activate
-cd /Users/tolgasabanoglu/Desktop/github/spatiotemporal
-source spatiotemporal_env/bin/activate
-
-# Run first script (parse data)
-python scripts/parse_garmin.py
-
-# Set credentials for Google Cloud services (like BigQuery)
-export GOOGLE_APPLICATION_CREDENTIALS="/Users/tolgasabanoglu/Desktop/github/spatiotemporal/spatiotemporal-key.json"
-
-# Run second script (load data to BigQuery)
-python scripts/load_to_bigquery.py
