@@ -17,8 +17,9 @@ This project processes GPS tracks (from Garmin), biometric data (steps, stress, 
   - `analysis.ipynb` — fetching the data, A/B test and regression results and visuals
 
 
-- `scripts/` — Python automation scripts  
-  - `parse_garmin.py`   
+- `garmin/` — Python automation scripts  
+  - `parse_garmin.py`
+  - `activities.py`
   - `load_to_bigquery.py` — Upload processed JSON data to BigQuery
 
 
