@@ -7,6 +7,6 @@ __pycache__/
 env/
 .DS_Store
 .env
-.env
-.env
 spatiotemporal-key.json
+venv/
+spatiotemporal.json

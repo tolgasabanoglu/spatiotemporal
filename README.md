@@ -1,4 +1,4 @@
-# 🧭 Spatiotemporal
+# Spatiotemporal
 
 A personal data analysis toolkit that integrates movement, health, and environmental context across space and time.
 
@@ -6,7 +6,7 @@ This project processes GPS tracks (from Garmin), biometric data (steps, stress, 
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 - `data/` — All datasets  
   - `raw/` — Raw data exports (e.g. GPX, JSON, CSV)  
@@ -36,7 +36,7 @@ This project processes GPS tracks (from Garmin), biometric data (steps, stress, 
 
 ---
 
-## 🚀 Features
+## Features
 
 - Parse location data from Garmin
 - Import and process Garmin health metrics (steps, sleep, stress)
@@ -47,7 +47,7 @@ This project processes GPS tracks (from Garmin), biometric data (steps, stress, 
 
 ---
 
-## 📊 A/B Testing
+## A/B Testing
 
 This project includes a framework for **personal A/B testing** to analyze how different habits, routines, and environmental exposures affect key health metrics.
 
@@ -63,28 +63,4 @@ This project includes a framework for **personal A/B testing** to analyze how di
 - Outputs: group stats, p-values, charts → saved in `experiments/results/`
 
 ---
-
-## 🛠️ Setup
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/tolgasabanoglu/spatiotemporal.git
-cd spatiotemporal
-
-conda env create -f env/environment.yml
-conda activate spatiotemporal
-
-
-📊 Example Output (Planned)
-date (weekly)		steps	avg_stress	mean_ndvi	sleep_score	body_battery
-2025-06-01 12,345	35	0.67	12.3 m	85	74
-
-
-📚 To Do
- Implement Garmin parser (done)
- Integrate Earth Engine NDVI (maybe generate synthetic ones)
- Merge health + GPS + environment 
- Visualize time-space-health patterns
- Add more A/B test logic + UI
 
