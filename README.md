@@ -56,12 +56,7 @@ This project includes a framework for **personal A/B testing** to analyze how di
 - Several biometrics variables → impact on stress
 - High NDVI (green space) vs. low NDVI → impact on average stress
 - Seasonal shifts, regression test, etc.
-
-### A/B Testing Components:
-- Test plans in YAML: `experiments/ab_test_plan.yaml`
-- Run interactively in: `notebooks/05_ab_analysis.ipynb`
-- Optional automation via: `scripts/run_ab_analysis.py`
-- Outputs: group stats, p-values, charts → saved in `experiments/results/`
+- Explore running patterns, improvements, together with environmental factors (2026)
 
 ---
 
