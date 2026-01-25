@@ -1,12 +1,38 @@
-data/raw/
-data/processed/
-data/external/
+# Data files (large/sensitive)
+data/raw/*
+data/processed/*
+data/external/*
+!data/**/.gitkeep
+
+# Python
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
-env/
-.DS_Store
-.env
-spatiotemporal-key.json
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
 venv/
-spatiotemporal.json
+env/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Secrets & credentials
+.env
+*.json
+!config/*.json
+
+# Logs
+*.log

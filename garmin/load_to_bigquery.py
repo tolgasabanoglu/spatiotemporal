@@ -41,9 +41,13 @@ def prepare_rows(directory):
     return rows
 
 # ------------------- Create or reset table -------------------
-def create_table_if_needed(table_id):
+def create_table_if_needed(table_id, reset=False):
     try:
         table = client.get_table(table_id)
+        if reset:
+            print(f"🗑️ Resetting table: {table_id}")
+            client.delete_table(table_id)
+            raise Exception("Table reset requested")
         # check schema, add missing fields if needed
         required_fields = {"filename", "raw_json"}
         existing_fields = {field.name for field in table.schema}
@@ -73,9 +77,14 @@ def upload_rows_to_bigquery(table_id, rows, chunk_size=CHUNK_SIZE):
             print(f"🚀 Uploaded {len(chunk)} rows successfully")
 
 # ------------------- Main -------------------
-def main():
+def main(reset_table=True):
+    """
+    Upload raw JSON data to BigQuery.
+    Args:
+        reset_table: If True, drops and recreates the table to avoid duplicates.
+    """
     table_id = f"{dataset_id}.{TABLE_NAME}"
-    create_table_if_needed(table_id)
+    create_table_if_needed(table_id, reset=reset_table)
     rows = prepare_rows(RAW_DIR)
     upload_rows_to_bigquery(table_id, rows)
 
