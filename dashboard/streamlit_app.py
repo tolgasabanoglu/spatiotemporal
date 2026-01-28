@@ -87,7 +87,7 @@ else:
 # KPI Cards
 st.header("Current Status")
 
-# Show last data update date
+# Show latest data date (the date of the metrics, not when they were fetched)
 if len(df_filtered) > 0:
     latest_date = df_filtered['date'].max()
     latest_date_obj = latest_date.date() if hasattr(latest_date, 'date') else latest_date
@@ -95,13 +95,13 @@ if len(df_filtered) > 0:
     days_ago = (today - latest_date_obj).days
 
     if days_ago == 0:
-        relative_time = "Today"
+        relative_time = "Today's data"
     elif days_ago == 1:
-        relative_time = "Yesterday"
+        relative_time = "Yesterday's data"
     else:
-        relative_time = f"{days_ago} days ago"
+        relative_time = f"{days_ago} days old"
 
-    st.markdown(f"**Last Data Update:** {latest_date.strftime('%B %d, %Y')} ({relative_time})")
+    st.markdown(f"**Latest Metrics:** {latest_date.strftime('%B %d, %Y')} ({relative_time})")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 
