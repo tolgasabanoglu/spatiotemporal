@@ -27,28 +27,68 @@ This project processes GPS tracks and activities from Garmin, biometric data (st
 
 ```
 spatiotemporal/
-├── garmin/                    # Data fetching scripts
-│   ├── parse_garmin.py       # Fetch daily metrics (steps, sleep, stress, etc.)
-│   ├── activities.py         # Fetch activity data (running, cycling, etc.)
-│   └── load_to_bigquery.py   # Upload data to BigQuery
+├── garmin/                       # Data fetching and ETL
+│   ├── parse_garmin.py          # Fetch daily metrics from Garmin API
+│   ├── activities.py            # Fetch activity data (running, cycling, etc.)
+│   ├── load_to_bigquery.py      # Upload raw JSON to BigQuery
+│   ├── deploy_views.py          # Deploy SQL transformation views
+│   └── sql/
+│       └── views.sql            # BigQuery views for data transformation
 │
-├── notebooks/                 # Analysis notebooks
-│   ├── analysis.ipynb        # Main analysis: PCA, ML models, feature importance
-│   ├── next_day_analysis.ipynb # Lagged analysis: running/sleep → next-day stress
-│   └── algorithms.py         # Reusable ML algorithms (Random Forest, Logistic Reg, NN)
+├── dashboard/                    # Visualization
+│   ├── streamlit_app.py         # Interactive Streamlit dashboard
+│   ├── deploy_dashboard_views.py # Deploy dashboard-specific views
+│   ├── looker_views.sql         # Views optimized for Looker Studio
+│   └── README.md                # Dashboard setup instructions
+│
+├── notebooks/                    # Analysis notebooks
+│   ├── analysis.ipynb           # Main analysis: PCA, ML models, feature importance
+│   ├── next_day_analysis.ipynb  # Lagged analysis: running/sleep → next-day stress
+│   └── algorithms.py            # Reusable ML algorithms
 │
 ├── data/
-│   ├── raw/                  # Raw JSON exports from Garmin API
-│   │   └── activities/       # Activity-specific data
-│   ├── processed/            # Cleaned, merged datasets
-│   └── external/             # Environmental data (NDVI, elevation)
+│   ├── raw/                     # Raw JSON exports from Garmin API
+│   │   └── activities/          # Activity-specific data
+│   ├── processed/               # Cleaned, merged datasets
+│   └── external/                # Environmental data (NDVI, elevation)
 │
-├── config/
-│   └── config.yaml           # Configuration placeholders
-│
-├── requirements.txt          # Python dependencies
+├── requirements.txt             # Python dependencies
 └── README.md
 ```
+
+---
+
+## Data Pipeline
+
+```
+Garmin API → parse_garmin.py → data/raw/*.json
+                                    ↓
+                         load_to_bigquery.py
+                                    ↓
+                    garmin_data.garmin_raw_data (raw JSON)
+                                    ↓
+                          deploy_views.py
+                                    ↓
+                    ┌───────────────┴───────────────┐
+                    ↓                               ↓
+            v_daily_metrics                 v_dashboard_daily
+            (analysis-ready)                (dashboard-ready)
+                    ↓                               ↓
+              notebooks/                    dashboard/streamlit_app.py
+```
+
+### BigQuery Views
+
+| View | Purpose |
+|------|---------|
+| `v_steps_daily` | Daily step totals, NULL for invalid days (steps=0) |
+| `v_body_battery_daily` | Charged/drained metrics |
+| `v_heart_rate_daily` | Resting HR, min/max HR |
+| `v_stress_daily` | Avg/max stress with categories |
+| `v_sleep_daily` | Sleep hours, HRV, body battery change |
+| `v_daily_metrics` | Merged daily view for analysis |
+| `v_data_quality_summary` | Monthly coverage stats |
+| `v_dashboard_*` | Dashboard-optimized views with trends |
 
 ---
 
@@ -73,7 +113,7 @@ echo "USERNAME=your_garmin_email@example.com" > garmin/.env
 echo "PASSWORD=your_garmin_password" >> garmin/.env
 ```
 
-### 3. (Optional) Configure BigQuery
+### 3. Configure BigQuery
 
 Place your Google Cloud service account key as `spatiotemporal-key.json` in the project root.
 
@@ -81,27 +121,52 @@ Place your Google Cloud service account key as `spatiotemporal-key.json` in the 
 
 ## Usage
 
-### Fetch Latest Data
+### Fetch and Load Data
 
 ```bash
 source venv/bin/activate
 
-# Fetch daily metrics (steps, sleep, stress, heart rate, body battery)
-cd garmin && python parse_garmin.py
+# 1. Fetch daily metrics from Garmin API
+python garmin/parse_garmin.py
 
-# Fetch activities (running, cycling, etc.)
-python activities.py
+# 2. Fetch activities (running, cycling, etc.)
+python garmin/activities.py
+
+# 3. Upload to BigQuery
+python garmin/load_to_bigquery.py
+
+# 4. Deploy transformation views
+python garmin/deploy_views.py
+
+# 5. Deploy dashboard views
+python dashboard/deploy_dashboard_views.py
 ```
 
-### Run Analysis
+### Run Dashboard
 
 ```bash
-# Start Jupyter
-jupyter notebook notebooks/
-
-# Or run notebooks directly
-jupyter nbconvert --to notebook --execute --inplace notebooks/next_day_analysis.ipynb
+streamlit run dashboard/streamlit_app.py
 ```
+
+Open http://localhost:8501 to view the dashboard.
+
+### Run Analysis Notebooks
+
+```bash
+jupyter notebook notebooks/
+```
+
+---
+
+## Dashboard Features
+
+- **Current Status**: KPI cards for stress, HR, sleep, body battery, steps
+- **Stress Trends**: Daily stress with 7-day rolling average
+- **Sleep Analysis**: Sleep hours over last 30 days
+- **Body Battery**: Charged vs drained visualization
+- **Correlations**: Sleep vs stress, body battery vs stress scatter plots
+- **Feature Importance**: Random Forest analysis of stress predictors
+- **Monthly Summary**: Stress and sleep trends by month
 
 ---
 
@@ -118,7 +183,7 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/next_day_analysis.
 ## Analysis Notebooks
 
 ### `analysis.ipynb`
-- Loads data from BigQuery
+- Loads data from BigQuery views
 - PCA analysis to identify key health dimensions
 - Random Forest regression for stress prediction
 - Logistic regression for high-stress classification
@@ -129,17 +194,17 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/next_day_analysis.
 - Running → next-day stress (t-test, correlation)
 - Sleep quality → next-day stress
 - Multiple regression combining all factors
-- Exports processed data to CSV
 
 ---
 
-## ML Models (algorithms.py)
+## Tech Stack
 
-| Model | Use Case |
-|-------|----------|
-| Random Forest | Predict continuous stress levels, feature importance |
-| Logistic Regression | Classify high vs low stress days |
-| Neural Network (MLP) | Non-linear pattern detection |
+- **Python 3.13** with pandas, scikit-learn, scipy, numpy
+- **garminconnect** for Garmin API access
+- **Google BigQuery** for data storage and transformation
+- **Streamlit** for interactive dashboard
+- **Plotly** for visualizations
+- **Jupyter** for analysis notebooks
 
 ---
 
@@ -150,12 +215,4 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/next_day_analysis.
 - [ ] Running intensity zones vs recovery
 - [ ] Seasonal patterns in stress/sleep
 - [ ] Automated daily data fetching (cron/scheduler)
-
----
-
-## Tech Stack
-
-- **Python 3.13** with pandas, scikit-learn, scipy, matplotlib, seaborn
-- **garminconnect** for Garmin API access
-- **Google BigQuery** for data storage
-- **Jupyter** for interactive analysis
+- [ ] Deploy dashboard to Cloud Run
