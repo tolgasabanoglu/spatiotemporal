@@ -86,6 +86,12 @@ else:
 
 # KPI Cards
 st.header("Current Status")
+
+# Show last data update date
+if len(df_filtered) > 0:
+    latest_date = df_filtered['date'].max()
+    st.markdown(f"**Last Data Update:** {latest_date.strftime('%B %d, %Y')} ({'Today' if latest_date.date() == pd.Timestamp.now().date() else 'Yesterday' if (pd.Timestamp.now().date() - latest_date.date()).days == 1 else f'{(pd.Timestamp.now().date() - latest_date.date()).days} days ago'})")
+
 col1, col2, col3, col4, col5 = st.columns(5)
 
 # Get latest row with actual data (not all N/A)
