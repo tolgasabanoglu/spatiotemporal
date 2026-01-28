@@ -90,7 +90,18 @@ st.header("Current Status")
 # Show last data update date
 if len(df_filtered) > 0:
     latest_date = df_filtered['date'].max()
-    st.markdown(f"**Last Data Update:** {latest_date.strftime('%B %d, %Y')} ({'Today' if latest_date.date() == pd.Timestamp.now().date() else 'Yesterday' if (pd.Timestamp.now().date() - latest_date.date()).days == 1 else f'{(pd.Timestamp.now().date() - latest_date.date()).days} days ago'})")
+    latest_date_obj = latest_date.date() if hasattr(latest_date, 'date') else latest_date
+    today = pd.Timestamp.now().date()
+    days_ago = (today - latest_date_obj).days
+
+    if days_ago == 0:
+        relative_time = "Today"
+    elif days_ago == 1:
+        relative_time = "Yesterday"
+    else:
+        relative_time = f"{days_ago} days ago"
+
+    st.markdown(f"**Last Data Update:** {latest_date.strftime('%B %d, %Y')} ({relative_time})")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 
