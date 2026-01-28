@@ -14,7 +14,8 @@ import os
 from google.cloud import bigquery
 
 # Configuration
-CREDENTIALS_PATH = "/Users/tolgasabanoglu/Desktop/github/spatiotemporal/spatiotemporal-key.json"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CREDENTIALS_PATH = os.path.join(PROJECT_ROOT, "spatiotemporal-key.json")
 SQL_FILE = os.path.join(os.path.dirname(__file__), "sql", "views.sql")
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = CREDENTIALS_PATH

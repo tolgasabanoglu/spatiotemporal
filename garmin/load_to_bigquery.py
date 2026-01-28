@@ -3,8 +3,9 @@ import json
 from google.cloud import bigquery
 
 # ------------------- Configuration -------------------
-CREDENTIALS_PATH = "/Users/tolgasabanoglu/Desktop/github/spatiotemporal/spatiotemporal-key.json"
-RAW_DIR = "/Users/tolgasabanoglu/Desktop/github/spatiotemporal/data/raw"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CREDENTIALS_PATH = os.path.join(PROJECT_ROOT, "spatiotemporal-key.json")
+RAW_DIR = os.path.join(PROJECT_ROOT, "data", "raw")
 DATASET_NAME = "garmin_data"
 TABLE_NAME = "garmin_raw_data"
 CHUNK_SIZE = 200  # rows per batch

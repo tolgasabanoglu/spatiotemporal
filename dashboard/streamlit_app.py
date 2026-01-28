@@ -15,7 +15,9 @@ from google.cloud import bigquery
 from sklearn.ensemble import RandomForestRegressor
 
 # Config
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/tolgasabanoglu/Desktop/github/spatiotemporal/spatiotemporal-key.json"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CREDENTIALS_PATH = os.path.join(PROJECT_ROOT, "spatiotemporal-key.json")
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = CREDENTIALS_PATH
 
 st.set_page_config(
     page_title="Garmin Health Dashboard",
