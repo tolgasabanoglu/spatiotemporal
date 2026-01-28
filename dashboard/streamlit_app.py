@@ -87,9 +87,18 @@ else:
 # KPI Cards
 st.header("Current Status")
 
-# Show latest data date (the date of the metrics, not when they were fetched)
+# Get latest row with actual data (not all N/A)
+latest = None
 if len(df_filtered) > 0:
-    latest_date = df_filtered['date'].max()
+    for i in range(len(df_filtered) - 1, -1, -1):
+        row = df_filtered.iloc[i]
+        if pd.notna(row.get('avg_stress')):
+            latest = row
+            break
+
+# Show latest data date (the date of the metrics with actual data)
+if latest is not None:
+    latest_date = latest['date']
     latest_date_obj = latest_date.date() if hasattr(latest_date, 'date') else latest_date
     today = pd.Timestamp.now().date()
     days_ago = (today - latest_date_obj).days
@@ -104,15 +113,6 @@ if len(df_filtered) > 0:
     st.markdown(f"**Latest Metrics:** {latest_date.strftime('%B %d, %Y')} ({relative_time})")
 
 col1, col2, col3, col4, col5 = st.columns(5)
-
-# Get latest row with actual data (not all N/A)
-latest = None
-if len(df_filtered) > 0:
-    for i in range(len(df_filtered) - 1, -1, -1):
-        row = df_filtered.iloc[i]
-        if pd.notna(row.get('avg_stress')):
-            latest = row
-            break
 
 with col1:
     if latest is not None and pd.notna(latest['avg_stress']):
