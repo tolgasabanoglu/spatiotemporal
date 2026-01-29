@@ -146,6 +146,69 @@ with col5:
     else:
         st.metric("Steps", "No data")
 
+# Coffee Recommendations
+st.header("Today's Coffee Recommendation")
+
+if latest is not None:
+    try:
+        from coffee_recommender import get_recommendations
+
+        # Extract health metrics
+        stress = latest.get('avg_stress', 50)
+        sleep = latest.get('sleep_hours', 7)
+        net_battery = latest.get('net_battery', 0)
+        resting_hr = latest.get('resting_hr', 60)
+
+        # Get recommendations
+        recommendations = get_recommendations(
+            stress=stress,
+            sleep_hours=sleep,
+            net_battery=net_battery,
+            resting_hr=resting_hr,
+            max_distance_km=5,
+            top_n=3
+        )
+
+        # Display top recommendation in a card
+        if recommendations and len(recommendations) > 0:
+            rec = recommendations[0]
+
+            # Create styled card
+            st.markdown(f"""
+            <div style="
+                background-color: #f0f2f6;
+                padding: 20px;
+                border-radius: 10px;
+                border-left: 5px solid #ff6b6b;
+            ">
+                <h3 style="margin-top: 0;">☕ {rec['cafe_name']}</h3>
+                <p style="margin: 5px 0;"><b>📍 Distance:</b> {rec['distance_km']} km from home</p>
+                <p style="margin: 5px 0;"><b>🎯 Confidence:</b> {rec['confidence']:.0f}%</p>
+                <p style="margin: 5px 0;"><b>🌤️ Weather:</b> {rec['weather_temp']:.1f}°C, {rec['weather_precip']:.1f}mm rain</p>
+                <p style="margin: 10px 0; font-style: italic;">{rec['reason']}</p>
+                <p style="margin: 5px 0; color: #666;"><small>{rec['address']}</small></p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Show alternative recommendations
+            if len(recommendations) > 1:
+                with st.expander("See alternative recommendations"):
+                    for i, alt_rec in enumerate(recommendations[1:], start=2):
+                        st.markdown(f"""
+                        **{i}. {alt_rec['cafe_name']}** ({alt_rec['distance_km']} km, {alt_rec['confidence']:.0f}% match)
+                        - {alt_rec['address']}
+                        """)
+        else:
+            st.info("No recommendations available at this time.")
+
+    except Exception as e:
+        st.warning(f"Coffee recommendations unavailable: {str(e)}")
+        import traceback
+        with st.expander("Show error details"):
+            st.code(traceback.format_exc())
+else:
+    st.info("Coffee recommendations will appear once health data is available.")
+
 # Stress Trend
 st.header("Stress Trends")
 
