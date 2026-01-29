@@ -197,6 +197,7 @@ if latest is not None:
                 <h3 style="margin-top: 0;">☕ {rec['cafe_name']}</h3>
                 <p style="margin: 5px 0;"><b>📍 Distance:</b> {rec['distance_km']} km from home</p>
                 <p style="margin: 5px 0;"><b>⭐ Rating:</b> {rec['rating']}/5</p>
+                <p style="margin: 5px 0;"><b>💪 Your Stress:</b> {stress:.1f}/100 (7-day avg)</p>
                 <p style="margin: 5px 0;"><b>🌤️ Weather:</b> {rec['weather_temp']:.1f}°C{', ' + str(rec['weather_precip']) + 'mm rain' if rec['weather_precip'] > 0 else ''}</p>
                 <p style="margin: 10px 0; font-style: italic;">{rec['reason']}</p>
                 <p style="margin: 5px 0; color: #666;"><small>{rec['address']}</small></p>
