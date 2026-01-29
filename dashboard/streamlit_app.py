@@ -162,9 +162,9 @@ if latest is not None:
             net_battery = last_7_days['net_battery'].mean() if 'net_battery' in last_7_days.columns else 0
             resting_hr = last_7_days['resting_hr'].mean() if 'resting_hr' in last_7_days.columns else 60
 
-            # Show what period is being used
+            # Show what period is being used with key metrics
             days_used = len(last_7_days.dropna(subset=['avg_stress']))
-            st.caption(f"Based on your last {days_used} days average health metrics")
+            st.caption(f"Based on your last {days_used} days average: Stress {stress:.1f}, Sleep {sleep:.1f}hr, Battery {net_battery:.1f}")
         else:
             # Fallback to latest day
             stress = latest.get('avg_stress', 50)
@@ -222,6 +222,51 @@ if latest is not None:
             st.code(traceback.format_exc())
 else:
     st.info("Coffee recommendations will appear once health data is available.")
+
+# Song Recommendations
+st.header("Today's Song Recommendations")
+
+if latest is not None and 'recommendations' in locals():
+    try:
+        from song_recommender import get_song_recommendations
+
+        # Get the mood and weather from coffee recommendations
+        rec = recommendations[0] if recommendations else None
+        if rec:
+            st.caption(f"Personalized playlist for your {rec['mood'].replace('_', ' ')} mood")
+
+            # Get song recommendations
+            songs = get_song_recommendations(
+                mood_profile=rec['mood'],
+                stress=stress,
+                sleep_hours=sleep,
+                weather_temp=rec['weather_temp'],
+                weather_precip=rec['weather_precip']
+            )
+
+            # Display songs in a styled card
+            for i, song in enumerate(songs, 1):
+                st.markdown(f"""
+                <div style="
+                    background-color: #f0f9ff;
+                    padding: 15px;
+                    border-radius: 8px;
+                    border-left: 4px solid #3b82f6;
+                    margin-bottom: 10px;
+                ">
+                    <p style="margin: 0; font-size: 16px;"><b>🎵 {i}. {song['title']}</b></p>
+                    <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">by {song['artist']}</p>
+                    <p style="margin: 8px 0 0 0; font-style: italic; font-size: 13px;">{song['reason']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+    except Exception as e:
+        st.warning(f"Song recommendations unavailable: {str(e)}")
+        with st.expander("Show error details"):
+            import traceback
+            st.code(traceback.format_exc())
+else:
+    st.info("Song recommendations will appear once health data is available.")
 
 # Stress Trend
 st.header("Stress Trends")
