@@ -1,6 +1,51 @@
 """
 Coffee Recommendation System
 Integrates Garmin health metrics with LAP Coffee mood-based recommendations
+
+## How It Works:
+
+1. **Health-to-Mood Mapping**: Converts Garmin biometrics (stress, sleep, body battery)
+   into environmental mood profiles (e.g., "green_nature", "buzz_urban")
+
+2. **Mood-to-Features Translation**: Each mood profile maps to environmental characteristics:
+   - parks_count_1km: Number of parks within 1km (0-20)
+   - open_bars_count_500m: Bars within 500m (0-25)
+   - ndvi: Greenness index from satellite (0-1, higher = greener)
+   - nightlight: Light pollution/urban activity (0-100)
+   - Weather: Temperature, precipitation from Open-Meteo API
+
+3. **Random Forest Classifier (RFC) Prediction**:
+   - Trained model: `/which-lap-coffee-should-i-visit/prediction/rfc_model.joblib`
+   - Model type: Multi-class RandomForestClassifier (16 classes = 16 cafés)
+   - Training data: 3,440 observations from Oct-Nov 2024 (autumn only)
+   - Accuracy: ~96% on test set
+   - How it works:
+     * Input: Feature vector [parks=15, bars=3, ndvi=0.7, temp=10, ...]
+     * Output: Probability distribution over 16 LAP Coffee locations
+     * Example: {Kastanienallee: 0.49, Falckensteinstraße: 0.41, ...}
+   - The model learned: "Cafés with high parks & low bars are in residential areas"
+
+4. **Location Filtering**: Filters cafés by distance from home (Bruchsaler Str. 10715)
+
+5. **Ranking**: Sorts by model confidence (probability) and distance
+
+## Training Data Limitation:
+
+⚠️ IMPORTANT: The model was trained ONLY on autumn data (Sept-Nov 2023-2025).
+This means predictions for other seasons may be less accurate because:
+- Summer: Different greenness (higher NDVI), warmer temps, more outdoor activity
+- Winter: Lower NDVI, colder, different café preferences
+- Spring: Transitional period
+
+**Recommendation**: Collect data for all seasons and retrain the model for year-round use.
+This would require:
+1. Fetching environmental data for spring (Mar-May), summer (Jun-Aug), winter (Dec-Feb)
+2. Re-running the feature engineering pipeline for all seasons
+3. Retraining the RFC with 10,000+ observations across all seasons
+4. Model would then generalize better to current conditions regardless of season
+
+For now, the model provides reasonable recommendations but may be biased toward
+autumn-like conditions.
 """
 
 import os
@@ -94,13 +139,21 @@ def health_to_mood_profile(stress, sleep_hours, net_battery, resting_hr, weather
             nightlight = 20
             ndvi = 0.70
 
-    elif precip > RAIN_THRESHOLD or temp < COLD_THRESHOLD:
-        # Bad weather → Cozy retreat
+    elif precip > RAIN_THRESHOLD:
+        # Rainy weather → Sheltered retreat
         mood = "rainy_retreat"
         parks = 8
         bars = 6
         nightlight = 35
         ndvi = 0.50
+
+    elif temp < COLD_THRESHOLD:
+        # Just cold (no rain) → Cozy indoor
+        mood = "cozy_indoor"
+        parks = 8
+        bars = 2
+        nightlight = 25
+        ndvi = 0.45
 
     elif stress < 40 and sleep_hours > 8 and net_battery > 0:
         # Well-rested + low stress → Social/energetic
@@ -272,7 +325,7 @@ def get_recommendations(stress, sleep_hours, net_battery, resting_hr,
         # 8. Generate recommendations
         recommendations = []
         for idx, row in cafes_nearby.head(top_n).iterrows():
-            reason = generate_reason(stress, sleep_hours, net_battery, mood_name, weather)
+            reason = generate_reason(stress, sleep_hours, net_battery, mood_name, weather, features)
 
             recommendations.append({
                 "cafe_name": row.get("display_name", row["name"]),  # Use friendly name
@@ -302,43 +355,94 @@ def get_recommendations(stress, sleep_hours, net_battery, resting_hr,
         }]
 
 
-def generate_reason(stress, sleep_hours, net_battery, mood, weather):
+def generate_reason(stress, sleep_hours, net_battery, mood, weather, features):
     """Generate human-readable explanation for recommendation"""
     temp = weather["temperature"]
     precip = weather["precipitation"]
 
-    reasons = []
-
-    # Health factors
+    # Health state analysis
+    health_state = []
     if stress > 60:
-        reasons.append(f"high stress ({stress:.0f})")
+        health_state.append(f"high stress level ({stress:.0f}/100)")
+    elif stress < 40:
+        health_state.append(f"low stress ({stress:.0f}/100)")
+
     if sleep_hours < 7:
-        reasons.append(f"limited sleep ({sleep_hours:.1f}hr)")
-    if net_battery < -20:
-        reasons.append(f"drained energy ({net_battery:.0f})")
-    if stress < 40 and sleep_hours > 8:
-        reasons.append("well-rested & relaxed")
+        health_state.append(f"limited sleep ({sleep_hours:.1f}hr)")
+    elif sleep_hours > 8:
+        health_state.append(f"well-rested ({sleep_hours:.1f}hr)")
 
-    # Weather factors
+    if net_battery < -15:
+        health_state.append(f"drained energy (battery: {net_battery:.0f})")
+    elif net_battery > 10:
+        health_state.append(f"energized (battery: +{net_battery:.0f})")
+
+    # Weather context
+    weather_context = []
     if temp < COLD_THRESHOLD:
-        reasons.append(f"cold weather ({temp:.1f}°C)")
+        weather_context.append(f"cold ({temp:.1f}°C)")
+    elif temp > 20:
+        weather_context.append(f"warm ({temp:.1f}°C)")
     if precip > RAIN_THRESHOLD:
-        reasons.append(f"rainy ({precip:.1f}mm)")
+        weather_context.append(f"rainy ({precip:.1f}mm)")
 
-    # Mood interpretation
-    mood_descriptions = {
-        "cozy_indoor": "cozy indoor spot for warmth",
-        "green_nature": "peaceful green environment",
-        "buzz_urban": "vibrant social atmosphere",
-        "rainy_retreat": "sheltered retreat from weather",
-        "cozy_recharge": "quiet recharge space",
-        "balanced": "balanced atmosphere"
+    # Mood profile explanation with café characteristics
+    mood_explanations = {
+        "cozy_indoor": {
+            "profile": "Cozy Indoor",
+            "reasoning": "Need for warmth and comfort",
+            "cafe_features": f"peaceful residential area (high parks: {features['parks_count_1km']}, low nightlife), ideal for relaxation"
+        },
+        "green_nature": {
+            "profile": "Green Nature",
+            "reasoning": "Seeking natural, restorative environment",
+            "cafe_features": f"surrounded by greenery (NDVI: {features['ndvi']:.2f}, parks: {features['parks_count_1km']}), minimal urban activity"
+        },
+        "buzz_urban": {
+            "profile": "Buzz Urban",
+            "reasoning": "Ready for social, energetic atmosphere",
+            "cafe_features": f"vibrant neighborhood (bars nearby: {features['open_bars_count_500m']}, nightlight: {features['nightlight']:.0f}), bustling activity"
+        },
+        "rainy_retreat": {
+            "profile": "Rainy Retreat",
+            "reasoning": "Sheltered comfort during bad weather",
+            "cafe_features": f"moderate activity area (parks: {features['parks_count_1km']}, bars: {features['open_bars_count_500m']}), cozy ambiance"
+        },
+        "cozy_recharge": {
+            "profile": "Cozy Recharge",
+            "reasoning": "Recovery and energy restoration",
+            "cafe_features": f"calm residential setting (parks: {features['parks_count_1km']}, low nightlight: {features['nightlight']:.0f}), restorative atmosphere"
+        },
+        "balanced": {
+            "profile": "Balanced",
+            "reasoning": "Moderate, all-around suitable environment",
+            "cafe_features": f"mixed neighborhood (parks: {features['parks_count_1km']}, bars: {features['open_bars_count_500m']}), flexible atmosphere"
+        }
     }
 
-    if reasons:
-        reason_text = "Based on " + ", ".join(reasons)
-    else:
-        reason_text = "Based on your current metrics"
+    mood_info = mood_explanations.get(mood, {
+        "profile": "Standard",
+        "reasoning": "General recommendation",
+        "cafe_features": "suitable environment"
+    })
 
-    mood_desc = mood_descriptions.get(mood, "suitable environment")
-    return f"{reason_text}, we suggest a {mood_desc}"
+    # Build comprehensive reason
+    parts = []
+
+    # Health context
+    if health_state:
+        parts.append("Your " + " + ".join(health_state))
+
+    # Weather context
+    if weather_context:
+        parts.append("today's " + " & ".join(weather_context) + " weather")
+
+    # Mood profile
+    parts.append(f'suggest a "{mood_info["profile"]}" mood ({mood_info["reasoning"]})')
+
+    reason = ". ".join(parts).capitalize()
+
+    # Add café characteristics
+    full_reason = f"{reason}. This café offers a {mood_info['cafe_features']}."
+
+    return full_reason
