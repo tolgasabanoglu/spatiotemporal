@@ -8,20 +8,20 @@ This project processes GPS tracks and activities from Garmin, biometric data (st
 
 ## Key Findings
 
-### Running and Next-Day Stress
-- **Running days show 5.7 points lower next-day stress** (35.5 vs 41.2)
-- Statistically significant (p = 0.005)
-- Running acts as a stress buffer for the following day
+### Principal Component Analysis
+- **Recovery vs Strain pattern**: PCA reveals that the primary factor explaining stress is a "recovery vs strain" dimension
+- **PC1 captures the main stress driver**: High PC1 = high stress and strain, Low PC1 = good recovery and low stress
+- Body battery change and resting heart rate are the strongest loadings on this primary component
 
-### Sleep and Next-Day Stress
-- **Sleep duration matters**: longer sleep correlates with lower next-day stress (r = -0.146, p = 0.008)
-- Sleep composition (deep/REM percentages) showed weaker effects than total hours
+### Predictive Model Performance
+- **Random Forest Regression**: Successfully predicts continuous stress levels
+- **Top predictors**: Body battery change and resting heart rate are the strongest predictors of daily stress
+- **Logistic Regression**: High accuracy (test set) for classifying high stress days (>50) vs normal days (≤50)
 
-### Predictive Model Insights
-- **Stress baseline carries forward**: Yesterday's stress level influences today, but interventions can break the cycle
-- **Running impact is substantial**: Each running session reduces next-day stress by 5.7 points (14% improvement)
-- **Sleep is cumulative**: Each additional hour of sleep correlates with measurably lower stress (r = -0.146)
-- **Modifiable factors matter**: Running and sleep are the most actionable levers for stress management
+### Protective Factors
+- **Body battery change is key**: Negative coefficient in logistic regression - better recovery (positive body battery) significantly reduces odds of high stress
+- **Resting heart rate matters**: Lower resting HR associated with lower stress levels
+- **Actionable insight**: Focus on improving recovery (body battery recharge) to manage stress
 
 ---
 
