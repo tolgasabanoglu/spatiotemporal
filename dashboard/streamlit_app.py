@@ -149,6 +149,75 @@ with col5:
 # Coffee Recommendations
 st.header("Today's Coffee Recommendation")
 
+# Info box explaining the methodology
+with st.expander("How does this recommendation work?"):
+    st.markdown("""
+    ### Machine Learning-Based Café Recommendation System
+
+    This system uses a **Random Forest Classifier (RFC)** trained on full-year environmental data from 15 LAP Coffee locations in Berlin. Here's how it works:
+
+    #### 1. Health-to-Mood Mapping
+    Your Garmin biometrics are analyzed to determine your current mood profile:
+    - **Stress level** (0-100): High stress suggests need for calm environments
+    - **Sleep hours**: Poor sleep indicates recovery needs
+    - **Body battery**: Energy levels guide activity preferences
+    - **Resting heart rate**: Overall wellness indicator
+
+    **Example mood profiles:**
+    - *Cozy Indoor*: High stress + cold weather → need warmth & comfort
+    - *Green Nature*: High stress + nice weather → seek restorative greenery
+    - *Buzz Urban*: Low stress + energized → want vibrant social atmosphere
+    - *Rainy Retreat*: Rainy weather → sheltered cozy space
+
+    #### 2. Mood-to-Environmental Features Translation
+    Each mood profile maps to specific environmental characteristics:
+
+    | Feature | Description | Example Values |
+    |---------|-------------|----------------|
+    | **Parks (1km)** | Number of parks within 1km | Cozy: 8, Buzz: 3 |
+    | **Bars (500m)** | Open bars within 500m | Cozy: 2, Buzz: 20 |
+    | **NDVI** | Greenness index (0-1, satellite data) | Green: 0.70, Urban: 0.30 |
+    | **Nightlight** | Light pollution/urban activity (0-100) | Cozy: 25, Buzz: 65 |
+    | **Weather** | Temperature & precipitation | Cold: <5°C, Warm: >20°C |
+
+    #### 3. Random Forest Classification
+    The trained model predicts café suitability:
+    - **Model type**: Multi-class Random Forest Classifier
+    - **Classes**: 15 LAP Coffee locations
+    - **Training data**: ~4,288 observations (Full year 2024: Winter, Spring, Summer, Autumn)
+    - **Accuracy**: ~98% on test set
+    - **Key learnings**:
+      - "Cafés with high parks & low bars = quiet residential areas"
+      - "Summer: higher NDVI (greenness), outdoor preferences"
+      - "Winter: cozy indoor spots preferred"
+
+    **How it predicts:**
+    ```
+    Input: [parks=8, bars=2, ndvi=0.45, temp=-1°C, ...]
+    Output: {
+        "LAP Coffee - Kastanienallee": 49% confidence,
+        "LAP Coffee - Falckensteinstraße": 41% confidence,
+        "LAP Coffee - Akazienstraße": 2% confidence,
+        ...
+    }
+    ```
+
+    #### 4. Location Filtering & Ranking
+    - Filter cafés within 5km of your home (Bruchsaler Str. 10715)
+    - Rank by model confidence (probability score)
+    - Consider café rating and distance
+    - Return top 3 recommendations
+
+    #### Model Limitations
+    ⚠️ **Current model trained only on autumn data** (Sept-Nov 2023-2025)
+    - May be less accurate in winter, spring, summer
+    - Different seasons have different greenness (NDVI) and user preferences
+    - **Future improvement**: Collect and train on full-year data for better year-round predictions
+
+    ---
+    *Model feature importance: Parks (34.8%) + Bars (34.4%) + NDVI (11.3%) + Nightlight (10.0%) = 90% of prediction power*
+    """)
+
 if latest is not None:
     try:
         from coffee_recommender import get_recommendations
@@ -172,13 +241,13 @@ if latest is not None:
             net_battery = latest.get('net_battery', 0)
             resting_hr = latest.get('resting_hr', 60)
 
-        # Get recommendations
+        # Get recommendations (increased range for more diversity)
         recommendations = get_recommendations(
             stress=stress,
             sleep_hours=sleep,
             net_battery=net_battery,
             resting_hr=resting_hr,
-            max_distance_km=5,
+            max_distance_km=10,  # Increased from 5km to include more options
             top_n=3
         )
 
