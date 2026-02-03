@@ -1,38 +1,58 @@
-# Data files (large/sensitive)
-data/raw/*
-data/processed/*
-data/external/*
-!data/**/.gitkeep
-
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+*.py[cod]
+*$py.class
 *.so
+.Python
 
-# Virtual environments
+# Virtual environment
 venv/
 env/
-.venv/
+ENV/
 
-# Jupyter
-.ipynb_checkpoints/
+# Jupyter Notebook
+.ipynb_checkpoints
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Data files (large)
+data/raw/*.json
+data/processed/*.csv
+data/processed/*.gpkg
+*.parquet
 
 # macOS
 .DS_Store
+._*
 
-# Secrets & credentials
-.env
-*.json
-!config/*.json
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # Logs
 *.log
+logs/
+
+# BigQuery credentials
+*-key.json
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment variables
+.env
+.env.local
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+
+# mypy
+.mypy_cache/

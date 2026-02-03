@@ -37,6 +37,9 @@ spatiotemporal/
 │
 ├── dashboard/                    # Visualization
 │   ├── streamlit_app.py         # Interactive Streamlit dashboard
+│   ├── coffee_recommender.py    # ML-powered café recommendations (RFC)
+│   ├── song_recommender.py      # GenAI-powered music suggestions (Gemini API)
+│   ├── COFFEE_RECOMMENDATIONS.md # Technical documentation for RFC model
 │   ├── deploy_dashboard_views.py # Deploy dashboard-specific views
 │   ├── looker_views.sql         # Views optimized for Looker Studio
 │   └── README.md                # Dashboard setup instructions
@@ -161,12 +164,40 @@ jupyter notebook notebooks/
 ## Dashboard Features
 
 - **Current Status**: KPI cards for stress, HR, sleep, body battery, steps
+- **Coffee Recommendations** (NEW): ML-powered café suggestions based on health metrics and mood
+  - Random Forest Classifier trained on 16 LAP Coffee locations
+  - Maps health biometrics → mood profiles → environmental features → café predictions
+  - Considers proximity, weather, greenness (NDVI), and neighborhood characteristics
+  - Detailed explanations with confidence scores
+- **Song Recommendations** (NEW): GenAI-powered music suggestions matching mood and weather
+  - Gemini API integration with curated fallback playlists
+  - Personalized selections for 6 mood profiles (cozy, green, buzz, rainy, recharge, balanced)
 - **Stress Trends**: Daily stress with 7-day rolling average
 - **Sleep Analysis**: Sleep hours over last 30 days
 - **Body Battery**: Charged vs drained visualization
 - **Correlations**: Sleep vs stress, body battery vs stress scatter plots
 - **Feature Importance**: Random Forest analysis of stress predictors
 - **Monthly Summary**: Stress and sleep trends by month
+
+---
+
+## Dashboard Screenshots
+
+### Health Metrics Overview
+[Screenshot placeholder - Current Status KPIs showing stress, HR, sleep, battery, steps]
+
+### Coffee Recommendations
+[Screenshot placeholder - ML-powered café recommendation card with mood profile, distance, rating, and reasoning]
+
+*The coffee recommendation system uses a Random Forest Classifier trained on environmental data (parks, bars, greenness, nightlight intensity) to predict which LAP Coffee location best matches your current health state and weather conditions.*
+
+### Song Recommendations
+[Screenshot placeholder - GenAI-generated playlist with 3 song suggestions matching mood and weather]
+
+*Song recommendations are powered by Google's Gemini API, creating personalized playlists based on your mood profile (derived from health metrics) and current weather.*
+
+### Stress & Sleep Trends
+[Screenshot placeholder - Interactive Plotly charts showing daily stress trends with 7-day rolling average and monthly stress/sleep comparison]
 
 ---
 
