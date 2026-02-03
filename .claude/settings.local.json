@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/tolgasabanoglu/Desktop/github/spatiotemporal/venv/bin/python:*)",
+      "Bash(ls:*)",
+      "Bash(./venv/bin/jupyter:*)",
+      "Bash(pkill:*)",
+      "Bash(source venv/bin/activate)",
+      "Bash(pip uninstall:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(arch -arm64 python3:*)",
+      "Bash(arch -arm64 python3.13:*)",
+      "Bash(arch -arm64 /bin/bash -c \"python3.13 -m venv venv && source venv/bin/activate && pip install --upgrade pip && pip install -r /tmp/current_requirements.txt\")",
+      "Bash(arch -arm64 /bin/bash -c \"source venv/bin/activate && python -c \"\"import platform; print\\(''Architecture:'', platform.machine\\(\\)\\)\"\" && python -c \"\"from rpds import HashTrieMap; print\\(''rpds imported successfully!''\\)\"\"\")",
+      "Bash(arch -arm64 /bin/bash:*)",
+      "Bash(python3:*)",
+      "Bash(streamlit run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)"
+    ]
+  }
+}

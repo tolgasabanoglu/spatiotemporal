@@ -1,0 +1,121 @@
+{
+  "activityId": 20961740536,
+  "activityUUID": {
+    "uuid": "0240ebb4-ad96-45d4-9641-a668c2f3a129"
+  },
+  "activityName": "Pilates",
+  "userProfileId": 130724645,
+  "isMultiSportParent": false,
+  "activityTypeDTO": {
+    "typeId": 160,
+    "typeKey": "pilates",
+    "parentTypeId": 29,
+    "isHidden": false,
+    "restricted": false,
+    "trimmable": false
+  },
+  "eventTypeDTO": {
+    "typeId": 9,
+    "typeKey": "uncategorized",
+    "sortOrder": 10
+  },
+  "accessControlRuleDTO": {
+    "typeId": 2,
+    "typeKey": "private"
+  },
+  "timeZoneUnitDTO": {
+    "unitId": 124,
+    "unitKey": "Europe/Paris",
+    "factor": 0.0,
+    "timeZone": "Europe/Paris"
+  },
+  "metadataDTO": {
+    "isOriginal": true,
+    "deviceApplicationInstallationId": 1000487,
+    "agentApplicationInstallationId": null,
+    "agentString": null,
+    "fileFormat": {
+      "formatId": 7,
+      "formatKey": "fit"
+    },
+    "associatedCourseId": null,
+    "lastUpdateDate": "2025-11-11T20:42:23.0",
+    "uploadedDate": "2025-11-11T20:42:23.0",
+    "videoUrl": null,
+    "hasPolyline": false,
+    "hasChartData": true,
+    "hasHrTimeInZones": true,
+    "hasPowerTimeInZones": false,
+    "userInfoDto": {
+      "userProfilePk": 130724645,
+      "displayname": "7a2851aa-2dbd-4229-8aa5-e7e850917dca",
+      "fullname": "Tolga",
+      "profileImageUrlLarge": "https://s3.amazonaws.com/garmin-connect-prod/profile_images/c15bfbe2-e142-4ff7-af67-c7119150542c-prof.png",
+      "profileImageUrlMedium": "https://s3.amazonaws.com/garmin-connect-prod/profile_images/c15bfbe2-e142-4ff7-af67-c7119150542c-prfr.png",
+      "profileImageUrlSmall": "https://s3.amazonaws.com/garmin-connect-prod/profile_images/c15bfbe2-e142-4ff7-af67-c7119150542c-prth.png",
+      "userPro": false
+    },
+    "childIds": [],
+    "childActivityTypes": [],
+    "sensors": null,
+    "activityImages": [],
+    "manufacturer": "GARMIN",
+    "diveNumber": null,
+    "lapCount": 1,
+    "associatedWorkoutId": null,
+    "isAtpActivity": null,
+    "deviceMetaDataDTO": {
+      "deviceId": "3495286287",
+      "deviceTypePk": 37125,
+      "deviceVersionPk": 1000487
+    },
+    "hasIntensityIntervals": false,
+    "hasSplits": false,
+    "eBikeMaxAssistModes": null,
+    "eBikeBatteryUsage": null,
+    "eBikeBatteryRemaining": null,
+    "eBikeAssistModeInfoDTOList": null,
+    "hasRunPowerWindData": null,
+    "calendarEventInfo": null,
+    "groupRideUUID": null,
+    "hasHeatMap": false,
+    "personalRecord": false,
+    "gcj02": false,
+    "runPowerWindDataEnabled": null,
+    "manualActivity": false,
+    "autoCalcCalories": false,
+    "favorite": false,
+    "elevationCorrected": false,
+    "trimmed": false
+  },
+  "summaryDTO": {
+    "startTimeLocal": "2025-11-11T17:04:36.0",
+    "startTimeGMT": "2025-11-11T16:04:36.0",
+    "distance": 0.0,
+    "duration": 2822.235,
+    "movingDuration": 2822.235,
+    "elapsedDuration": 2822.235,
+    "averageSpeed": 0.0,
+    "averageMovingSpeed": 0.0,
+    "calories": 236.0,
+    "bmrCalories": 69.0,
+    "averageHR": 109.0,
+    "maxHR": 141.0,
+    "minHR": 69.0,
+    "averageTemperature": 28.202338766832035,
+    "maxTemperature": 31.0,
+    "minTemperature": 26.0,
+    "trainingEffect": 2.0,
+    "anaerobicTrainingEffect": 0.0,
+    "aerobicTrainingEffectMessage": "MAINTAINING_AEROBIC_BASE_7",
+    "anaerobicTrainingEffectMessage": "NO_ANAEROBIC_BENEFIT_0",
+    "activeSets": 2,
+    "waterEstimated": 496.0,
+    "trainingEffectLabel": "AEROBIC_BASE",
+    "minActivityLapDuration": 2822.235,
+    "moderateIntensityMinutes": 29,
+    "vigorousIntensityMinutes": 0,
+    "steps": 22,
+    "differenceBodyBattery": -5
+  }
+}
