@@ -224,9 +224,10 @@ jupyter notebook notebooks/
 
 ### `next_day_analysis.ipynb`
 - **Lagged analysis**: How today's actions affect tomorrow
-- Running → next-day stress (t-test, correlation)
-- Sleep quality → next-day stress
-- Multiple regression combining all factors
+- Running → next-day stress (t-test showing 5.7 point reduction, p=0.005)
+- Sleep duration → next-day stress (correlation analysis)
+- Simple bar charts for clear visualization
+- Focus on statistical significance over complex modeling
 
 ---
 
