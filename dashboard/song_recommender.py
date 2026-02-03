@@ -1,11 +1,14 @@
 """
 Song Recommendation System
 Uses GenAI (Gemini) to recommend songs based on mood and weather
+Falls back to curated playlists with daily rotation when API unavailable
 """
 
 import os
 import json
 import requests
+import random
+from datetime import datetime
 
 
 def get_gemini_api_key():
@@ -27,41 +30,87 @@ def get_gemini_api_key():
 
 
 def get_fallback_recommendations(mood_profile, weather_temp):
-    """Curated playlists for when API is unavailable"""
+    """Curated playlists for when API is unavailable - with daily rotation for variety"""
     playlists = {
         "cozy_indoor": [
             {"title": "Holocene", "artist": "Bon Iver", "reason": "Warm, introspective melodies perfect for cold, reflective moments indoors"},
             {"title": "To Build a Home", "artist": "The Cinematic Orchestra", "reason": "Emotional depth that creates a cozy, contemplative atmosphere"},
-            {"title": "Skinny Love", "artist": "Bon Iver", "reason": "Intimate acoustic sound ideal for quiet, comfortable spaces"}
+            {"title": "Skinny Love", "artist": "Bon Iver", "reason": "Intimate acoustic sound ideal for quiet, comfortable spaces"},
+            {"title": "Flume", "artist": "Bon Iver", "reason": "Delicate textures create a peaceful indoor sanctuary"},
+            {"title": "The Night We Met", "artist": "Lord Huron", "reason": "Nostalgic warmth perfect for cozy introspection"},
+            {"title": "Kathleen", "artist": "Josh Ritter", "reason": "Gentle storytelling for comfortable, reflective moments"},
+            {"title": "Bloodbank", "artist": "Bon Iver", "reason": "Hushed intimacy ideal for quiet indoor comfort"},
+            {"title": "For Emma", "artist": "Bon Iver", "reason": "Raw emotion wrapped in cozy acoustic warmth"},
+            {"title": "Such Great Heights", "artist": "Iron & Wine", "reason": "Soft, tender cover perfect for peaceful moments"}
         ],
         "green_nature": [
             {"title": "Banana Pancakes", "artist": "Jack Johnson", "reason": "Laid-back, nature-inspired vibes perfect for relaxed outdoor moments"},
             {"title": "Here Comes the Sun", "artist": "The Beatles", "reason": "Uplifting and natural, captures the essence of green spaces"},
-            {"title": "Big Sur", "artist": "The Thrills", "reason": "Breezy, carefree energy that matches peaceful natural settings"}
+            {"title": "Big Sur", "artist": "The Thrills", "reason": "Breezy, carefree energy that matches peaceful natural settings"},
+            {"title": "Island in the Sun", "artist": "Weezer", "reason": "Sunny, outdoor vibes for green space relaxation"},
+            {"title": "The Wolf", "artist": "Mumford & Sons", "reason": "Folk energy that connects with natural surroundings"},
+            {"title": "Ends of the Earth", "artist": "Lord Huron", "reason": "Wandering melodies perfect for outdoor exploration"},
+            {"title": "Rivers and Roads", "artist": "The Head and the Heart", "reason": "Natural imagery and peaceful acoustic warmth"},
+            {"title": "Harvest Moon", "artist": "Neil Young", "reason": "Timeless folk perfect for green, open spaces"},
+            {"title": "Garden Song", "artist": "Phoebe Bridgers", "reason": "Nature-inspired introspection with gentle acoustics"}
         ],
         "buzz_urban": [
             {"title": "Electric Feel", "artist": "MGMT", "reason": "High-energy synths perfect for vibrant city nightlife"},
             {"title": "Digital Love", "artist": "Daft Punk", "reason": "Pulsing beats that match urban energy and social scenes"},
-            {"title": "Midnight City", "artist": "M83", "reason": "Epic, driving rhythm perfect for bustling metropolitan vibes"}
+            {"title": "Midnight City", "artist": "M83", "reason": "Epic, driving rhythm perfect for bustling metropolitan vibes"},
+            {"title": "Pumped Up Kicks", "artist": "Foster the People", "reason": "Catchy beats for energetic urban movement"},
+            {"title": "Get Lucky", "artist": "Daft Punk", "reason": "Groovy, social energy for vibrant nightlife"},
+            {"title": "Feel It Still", "artist": "Portugal. The Man", "reason": "Modern funk perfect for urban social scenes"},
+            {"title": "Tongue Tied", "artist": "Grouplove", "reason": "High-energy anthems for bustling city vibes"},
+            {"title": "Walking on a Dream", "artist": "Empire of the Sun", "reason": "Euphoric synths matching metropolitan energy"},
+            {"title": "Safe and Sound", "artist": "Capital Cities", "reason": "Upbeat urban pop for social, energetic moments"}
         ],
         "rainy_retreat": [
             {"title": "Let It Be", "artist": "The Beatles", "reason": "Calming and reassuring, perfect for weathering a storm"},
             {"title": "The Night We Met", "artist": "Lord Huron", "reason": "Nostalgic and cozy, ideal for rainy day introspection"},
-            {"title": "Champagne Supernova", "artist": "Oasis", "reason": "Dreamy and atmospheric, matches the mood of rain outside"}
+            {"title": "Champagne Supernova", "artist": "Oasis", "reason": "Dreamy and atmospheric, matches the mood of rain outside"},
+            {"title": "Fake Plastic Trees", "artist": "Radiohead", "reason": "Melancholic beauty for contemplative rainy moments"},
+            {"title": "Pursued by a Bear", "artist": "The Tallest Man on Earth", "reason": "Intimate folk for sheltered reflection during storms"},
+            {"title": "Falling Slowly", "artist": "Glen Hansard", "reason": "Gentle piano matching the rhythm of rain"},
+            {"title": "Mad World", "artist": "Gary Jules", "reason": "Contemplative melancholy perfect for rainy introspection"},
+            {"title": "The Blower's Daughter", "artist": "Damien Rice", "reason": "Emotional depth for sheltered, rainy moments"},
+            {"title": "To Build a Home", "artist": "The Cinematic Orchestra", "reason": "Cinematic warmth for cozy rain retreats"}
         ],
         "cozy_recharge": [
             {"title": "Breathe Me", "artist": "Sia", "reason": "Gentle and restorative, perfect for energy recovery"},
             {"title": "Samson", "artist": "Regina Spektor", "reason": "Soft piano melodies that support quiet recharging"},
-            {"title": "Mad World", "artist": "Gary Jules", "reason": "Contemplative and calm, ideal for rest and reflection"}
+            {"title": "Mad World", "artist": "Gary Jules", "reason": "Contemplative and calm, ideal for rest and reflection"},
+            {"title": "Cosmic Love", "artist": "Florence + The Machine", "reason": "Ethereal beauty for peaceful energy restoration"},
+            {"title": "Skinny Love", "artist": "Birdy", "reason": "Delicate piano cover perfect for gentle recovery"},
+            {"title": "Turning Page", "artist": "Sleeping At Last", "reason": "Soothing melodies that support recharging"},
+            {"title": "Holocene", "artist": "Bon Iver", "reason": "Peaceful atmospheres for restful recovery"},
+            {"title": "The Call", "artist": "Regina Spektor", "reason": "Soft, restorative tones for energy renewal"},
+            {"title": "Eyes on Fire", "artist": "Blue Foundation", "reason": "Ambient calm perfect for quiet recharge"}
         ],
         "balanced": [
             {"title": "Ho Hey", "artist": "The Lumineers", "reason": "Upbeat yet mellow, perfect for a balanced, flexible mood"},
             {"title": "Home", "artist": "Edward Sharpe & The Magnetic Zeros", "reason": "Feel-good vibes that work for various activities"},
-            {"title": "Budapest", "artist": "George Ezra", "reason": "Cheerful and moderate energy, suits balanced states"}
+            {"title": "Budapest", "artist": "George Ezra", "reason": "Cheerful and moderate energy, suits balanced states"},
+            {"title": "Riptide", "artist": "Vance Joy", "reason": "Light and catchy, perfect for balanced mood"},
+            {"title": "Little Talks", "artist": "Of Monsters and Men", "reason": "Uplifting folk-pop for flexible activities"},
+            {"title": "Some Nights", "artist": "fun.", "reason": "Dynamic energy that adapts to various moods"},
+            {"title": "Dog Days Are Over", "artist": "Florence + The Machine", "reason": "Joyful energy for balanced, positive moments"},
+            {"title": "Mr. Brightside", "artist": "The Killers", "reason": "Anthemic energy perfect for any activity"},
+            {"title": "I Will Wait", "artist": "Mumford & Sons", "reason": "Building energy that suits balanced states"}
         ]
     }
 
-    return playlists.get(mood_profile, playlists["balanced"])
+    # Get songs for mood profile
+    available_songs = playlists.get(mood_profile, playlists["balanced"])
+
+    # Use daily seed for consistent rotation throughout the day
+    date_seed = int(datetime.now().date().toordinal())
+    random.seed(date_seed)
+
+    # Randomly select 3 songs from the available pool
+    selected_songs = random.sample(available_songs, min(3, len(available_songs)))
+
+    return selected_songs
 
 
 def get_song_recommendations(mood_profile, stress, sleep_hours, weather_temp, weather_precip):
