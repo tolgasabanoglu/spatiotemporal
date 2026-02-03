@@ -62,6 +62,20 @@ pip install streamlit plotly
 streamlit run dashboard/streamlit_app.py
 ```
 
+## Dashboard Screenshots
+
+### Current Status & Recommendations
+![Dashboard Overview](screenshots/Screenshot%202026-02-03%20at%2015.09.21.png)
+*Health metrics KPIs with ML-powered coffee recommendations (LAP Coffee) and GenAI song suggestions*
+
+### Trends & Analysis
+![Stress and Sleep Trends](screenshots/Screenshot%202026-02-03%20at%2015.10.11.png)
+*Daily stress trends with 7-day rolling average, sleep hours (last 30 days), and body battery charged vs drained*
+
+### Correlations & Feature Importance
+![Correlations and ML Insights](screenshots/Screenshot%202026-02-03%20at%2015.10.30.png)
+*Sleep vs Stress and Body Battery vs Stress scatter plots with Random Forest feature importance analysis*
+
 ## Views Reference
 
 ### v_dashboard_daily
