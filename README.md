@@ -237,7 +237,6 @@ jupyter notebook notebooks/
 
 ## Future Work
 
-- [ ] Add NDVI (green space exposure) correlation analysis
 - [ ] Cumulative sleep debt effects
 - [ ] Running intensity zones vs recovery
 - [ ] Seasonal patterns in stress/sleep
