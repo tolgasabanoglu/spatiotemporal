@@ -1,0 +1,9 @@
+{
+  "_comment": "Track café visits to encourage diversity in recommendations",
+  "_format": "cafe_name: [list of ISO date strings (YYYY-MM-DD)]",
+  "_penalty_rules": {
+    "0-3_days_ago": "30% score penalty",
+    "4-7_days_ago": "15% score penalty",
+    "8+_days_ago": "no penalty"
+  }
+}

@@ -36,9 +36,28 @@ Integrates Garmin health metrics with LAP Coffee mood-based recommendations
    - Default range: 10km radius (increased for better diversity)
 
 5. **Ranking**: Balanced scoring combining:
-   - Model confidence (probability from RFC)
-   - Distance penalty (closer is better, but not overwhelming)
-   - Slight randomization for variety
+   - Model confidence (probability from RFC) - 60% weight
+   - Distance penalty (closer is better, but not overwhelming) - 40% weight
+   - Visit history penalty (recently visited cafés get lower scores):
+     * 30% penalty for cafés visited in last 3 days
+     * 15% penalty for cafés visited 4-7 days ago
+   - Daily randomization for variety (±10 points, same throughout the day)
+
+## History Tracking Usage:
+
+To manually log café visits (encourages recommendation diversity):
+
+```python
+from dashboard.coffee_recommender import save_visit_history
+
+# Log a visit to a café (uses today's date)
+save_visit_history("LAP COFFEE_Kastanienallee")
+
+# Or log a past visit
+save_visit_history("LAP COFFEE_Falckensteinstraße", "2026-02-01")
+```
+
+History is stored in: `dashboard/cafe_visit_history.json`
 """
 
 import os
@@ -46,7 +65,8 @@ import sys
 import pandas as pd
 import numpy as np
 import requests
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from geopy.distance import geodesic
 import joblib
 
@@ -57,6 +77,7 @@ ENCODER_PATH = os.path.join(LAP_PROJECT_PATH, "prediction", "label_encoder.jobli
 CAFE_DATA_PATH = os.path.join(LAP_PROJECT_PATH, "data", "processed", "lap_locations.gpkg")
 PARKS_DATA_PATH = os.path.join(LAP_PROJECT_PATH, "data", "processed", "lap_locations_with_park_counts.gpkg")
 BARS_DATA_PATH = os.path.join(LAP_PROJECT_PATH, "data", "processed", "lap_locations_with_open_bars.gpkg")
+HISTORY_FILE_PATH = os.path.join(os.path.dirname(__file__), "cafe_visit_history.json")
 
 # User home location
 HOME_LOCATION = {
@@ -99,6 +120,92 @@ def fetch_berlin_weather():
             "weather_code": 0,
             "time": datetime.now().isoformat()
         }
+
+
+def load_visit_history():
+    """
+    Load café visit history from JSON file
+
+    Returns:
+        dict: {cafe_name: [list of ISO date strings]}
+    """
+    if not os.path.exists(HISTORY_FILE_PATH):
+        return {}
+
+    try:
+        with open(HISTORY_FILE_PATH, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Warning: Could not load visit history: {e}")
+        return {}
+
+
+def save_visit_history(cafe_name, visit_date=None):
+    """
+    Save a café visit to history file
+
+    Args:
+        cafe_name: Name of the café
+        visit_date: ISO date string (defaults to today)
+    """
+    if visit_date is None:
+        visit_date = datetime.now().date().isoformat()
+
+    history = load_visit_history()
+
+    if cafe_name not in history:
+        history[cafe_name] = []
+
+    # Add visit if not already recorded for this date
+    if visit_date not in history[cafe_name]:
+        history[cafe_name].append(visit_date)
+
+    try:
+        with open(HISTORY_FILE_PATH, 'w') as f:
+            json.dump(history, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save visit history: {e}")
+
+
+def calculate_history_penalty(cafe_name, history):
+    """
+    Calculate penalty score for recently visited cafés
+
+    Args:
+        cafe_name: Name of the café
+        history: Visit history dict
+
+    Returns:
+        float: Penalty percentage (0-30%, where 30% = visited yesterday)
+    """
+    if cafe_name not in history or not history[cafe_name]:
+        return 0.0
+
+    # Get most recent visit
+    recent_visits = sorted(history[cafe_name], reverse=True)
+    last_visit_str = recent_visits[0]
+
+    try:
+        last_visit_date = datetime.fromisoformat(last_visit_str).date()
+        today = datetime.now().date()
+        days_ago = (today - last_visit_date).days
+
+        if days_ago < 0:
+            # Future date (shouldn't happen, but handle gracefully)
+            return 0.0
+        elif days_ago <= 3:
+            # Visited in last 3 days: 30% penalty
+            return 30.0
+        elif days_ago <= 7:
+            # Visited 4-7 days ago: 15% penalty
+            return 15.0
+        else:
+            # Visited more than 7 days ago: no penalty
+            return 0.0
+
+    except Exception as e:
+        print(f"Warning: Could not parse visit date for {cafe_name}: {e}")
+        return 0.0
 
 
 def health_to_mood_profile(stress, sleep_hours, net_battery, resting_hr, weather):
@@ -328,7 +435,10 @@ def get_recommendations(stress, sleep_hours, net_battery, resting_hr,
         # Add confidence scores to nearby cafés
         cafes_nearby["confidence"] = cafes_nearby["name"].map(cafe_scores).fillna(0)
 
-        # 7. Rank with balanced scoring (confidence + distance + diversity)
+        # 7. Load visit history for diversity
+        visit_history = load_visit_history()
+
+        # 8. Rank with balanced scoring (confidence + distance + diversity + history)
         # Normalize confidence (0-100) and distance (inverse, closer = higher score)
         max_dist = cafes_nearby["distance_km"].max()
         cafes_nearby["distance_score"] = (1 - cafes_nearby["distance_km"] / max_dist) * 100
@@ -339,12 +449,22 @@ def get_recommendations(stress, sleep_hours, net_battery, resting_hr,
             cafes_nearby["distance_score"] * 0.4
         )
 
-        # Add small random factor for diversity (±2 points)
+        # Calculate history penalties for each café (0-30%)
+        cafes_nearby["history_penalty"] = cafes_nearby["name"].apply(
+            lambda name: calculate_history_penalty(name, visit_history)
+        )
+
+        # Add randomness for daily variety (±10 points, increased from ±2)
         # Use daily seed for consistency - same recommendations throughout the day
         date_seed = int(datetime.now().date().toordinal())
         np.random.seed(date_seed)
-        cafes_nearby["random_factor"] = np.random.uniform(-2, 2, len(cafes_nearby))
-        cafes_nearby["final_score"] = cafes_nearby["balanced_score"] + cafes_nearby["random_factor"]
+        cafes_nearby["random_factor"] = np.random.uniform(-10, 10, len(cafes_nearby))
+
+        # Apply history penalty and random factor to get final score
+        cafes_nearby["final_score"] = (
+            cafes_nearby["balanced_score"] * (1 - cafes_nearby["history_penalty"] / 100)
+            + cafes_nearby["random_factor"]
+        )
 
         # Sort by final score
         cafes_nearby = cafes_nearby.sort_values("final_score", ascending=False)
