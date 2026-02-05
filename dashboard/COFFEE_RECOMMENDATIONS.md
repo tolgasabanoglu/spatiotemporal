@@ -65,9 +65,17 @@ The model learned patterns like:
 - Green cafés (high NDVI) → Near parks like Volkspark
 
 **Step 4: Location Filtering & Ranking**
-- Filter to cafés within 5km of home (Bruchsaler Str. 10715)
-- Rank by model probability (confidence)
+- Filter to cafés within 10km of home (Bruchsaler Str. 10715)
+- **Balanced Scoring** combines:
+  * Model confidence (60% weight) - RFC probability for each café
+  * Distance score (40% weight) - Proximity bonus (closer is better)
+  * History penalty - Recently visited cafés get lower scores:
+    - 30% penalty for visits within last 3 days
+    - 15% penalty for visits 4-7 days ago
+  * Daily randomness (±10 points) - Ensures variety day-to-day
 - Return top 3 recommendations
+
+**Dynamic Diversity**: The system tracks visit history in `cafe_visit_history.json` and applies smart penalties to encourage exploring different cafés instead of recommending the same spots repeatedly.
 
 ---
 
@@ -104,6 +112,49 @@ The model provides accurate year-round recommendations because:
 4. **Robust Feature Learning** - Captured seasonal patterns in NDVI, temperature, and behavior
 
 **Bottom Line**: The system is production-ready with full-year training data.
+
+---
+
+## Visit History Tracking
+
+The system now includes **intelligent visit tracking** to ensure recommendation diversity:
+
+### How It Works
+1. **Automatic Penalty System**: Cafés you've visited recently get lower scores
+   - Last 3 days: 30% score reduction
+   - Days 4-7: 15% score reduction
+   - After 7 days: No penalty (back in rotation)
+
+2. **Daily Randomness**: Each day adds ±10 points of random variation to scores, ensuring you see different options even with the same health metrics
+
+### Tracking Your Visits
+
+History is stored in: `/dashboard/cafe_visit_history.json`
+
+**Option 1: Manual Tracking** (Python)
+```python
+from dashboard.coffee_recommender import save_visit_history
+
+# Log today's visit
+save_visit_history("LAP COFFEE_Kastanienallee")
+
+# Log a past visit
+save_visit_history("LAP COFFEE_Falckensteinstraße", "2026-02-01")
+```
+
+**Option 2: Direct JSON Edit**
+```json
+{
+  "LAP COFFEE_Kastanienallee": ["2026-02-05", "2026-01-28"],
+  "LAP COFFEE_Falckensteinstraße": ["2026-02-03"]
+}
+```
+
+### Benefits
+- **No Repetition**: Won't see the same café every day
+- **Smart Rotation**: System naturally cycles through your options
+- **Still Personalized**: Health-based mood matching remains the priority
+- **Configurable**: Edit `cafe_visit_history.json` anytime to reset or adjust history
 
 ---
 
