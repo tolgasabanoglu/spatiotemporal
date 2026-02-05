@@ -8,20 +8,23 @@ This project processes GPS tracks and activities from Garmin, biometric data (st
 
 ## Key Findings
 
+*Updated February 2026 with 336 observations (Feb 2025 - Feb 2026)*
+
 ### Principal Component Analysis
 - **Recovery vs Strain pattern**: PCA reveals that the primary factor explaining stress is a "recovery vs strain" dimension
-- **PC1 captures the main stress driver**: High PC1 = high stress and strain, Low PC1 = good recovery and low stress
-- Body battery change and resting heart rate are the strongest loadings on this primary component
+- **PC1 (43.8% variance)**: Sleep quality drives the main recovery axis - higher total sleep and REM sleep = better recovery and lower stress
+- **Strongest loadings**: REM sleep hours (0.598), total sleep hours (0.517), resting heart rate (-0.465)
 
 ### Predictive Model Performance
-- **Random Forest Regression**: Successfully predicts continuous stress levels
-- **Top predictors**: Body battery change and resting heart rate are the strongest predictors of daily stress
-- **Logistic Regression**: High accuracy (test set) for classifying high stress days (>50) vs normal days (≤50)
+- **Random Forest Regression**: Successfully predicts continuous stress levels (R² = 0.406, RMSE = 6.71)
+- **Top predictors**: REM sleep hours (27.9%), net body battery (23.5%), resting heart rate (20.8%)
+- **Logistic Regression**: High accuracy (92.6% test set) for classifying high stress days (>50) vs normal days (≤50)
 
 ### Protective Factors
-- **Body battery change is key**: Negative coefficient in logistic regression - better recovery (positive body battery) significantly reduces odds of high stress
-- **Resting heart rate matters**: Lower resting HR associated with lower stress levels
-- **Actionable insight**: Focus on improving recovery (body battery recharge) to manage stress
+- **Sleep quality is paramount**: REM sleep has the strongest protective effect (-0.859 coefficient) against high stress
+- **Deep sleep matters**: Second strongest protective factor (-0.503 coefficient)
+- **Total sleep hours**: Consistent sleep duration (-0.374 coefficient) reduces stress odds
+- **Actionable insight**: Prioritize sleep quality (especially REM and deep sleep) to manage stress effectively
 
 ---
 
