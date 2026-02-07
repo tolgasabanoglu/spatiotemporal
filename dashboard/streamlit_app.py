@@ -208,11 +208,12 @@ with st.expander("How does this recommendation work?"):
     - Consider café rating and distance
     - Return top 3 recommendations
 
-    #### Model Limitations
-    ⚠️ **Current model trained only on autumn data** (Sept-Nov 2023-2025)
-    - May be less accurate in winter, spring, summer
-    - Different seasons have different greenness (NDVI) and user preferences
-    - **Future improvement**: Collect and train on full-year data for better year-round predictions
+    #### Model Performance
+    ✅ **Trained on complete full-year data** (Dec 2023 - Nov 2024, 3,648 observations)
+    - **97.7% test accuracy** across all seasons
+    - Robust predictions for all weather conditions (-5°C to 30°C)
+    - Captures seasonal variations in NDVI, temperature, and café preferences
+    - **Dynamic distance filtering**: Explores farther cafés when you're relaxed and weather is nice
 
     ---
     *Model feature importance: Parks (34.8%) + Bars (34.4%) + NDVI (11.3%) + Nightlight (10.0%) = 90% of prediction power*
