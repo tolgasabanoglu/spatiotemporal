@@ -209,7 +209,7 @@ with st.expander("How does this recommendation work?"):
     - Return top 3 recommendations
 
     #### Model Performance
-    ✅ **Trained on complete full-year data** (Dec 2023 - Nov 2024, 3,648 observations)
+     **Trained on complete full-year data** (Dec 2023 - Nov 2024, 3,648 observations)
     - **97.7% test accuracy** across all seasons
     - Robust predictions for all weather conditions (-5°C to 30°C)
     - Captures seasonal variations in NDVI, temperature, and café preferences
@@ -264,11 +264,11 @@ if latest is not None:
                 border-radius: 10px;
                 border-left: 5px solid #ff6b6b;
             ">
-                <h3 style="margin-top: 0;">☕ {rec['cafe_name']}</h3>
-                <p style="margin: 5px 0;"><b>📍 Distance:</b> {rec['distance_km']} km from home</p>
-                <p style="margin: 5px 0;"><b>⭐ Rating:</b> {rec['rating']}/5</p>
-                <p style="margin: 5px 0;"><b>💪 Your Stress:</b> {stress:.1f}/100 (7-day avg)</p>
-                <p style="margin: 5px 0;"><b>🌤️ Weather:</b> {rec['weather_temp']:.1f}°C{', ' + str(rec['weather_precip']) + 'mm rain' if rec['weather_precip'] > 0 else ''}</p>
+                <h3 style="margin-top: 0;">{rec['cafe_name']}</h3>
+                <p style="margin: 5px 0;"><b>Distance:</b> {rec['distance_km']} km from home</p>
+                <p style="margin: 5px 0;"><b>Rating:</b> {rec['rating']}/5</p>
+                <p style="margin: 5px 0;"><b>Your Stress:</b> {stress:.1f}/100 (7-day avg)</p>
+                <p style="margin: 5px 0;"><b>Weather:</b> {rec['weather_temp']:.1f}°C{', ' + str(rec['weather_precip']) + 'mm rain' if rec['weather_precip'] > 0 else ''}</p>
                 <p style="margin: 10px 0; font-style: italic;">{rec['reason']}</p>
                 <p style="margin: 5px 0; color: #666;"><small>{rec['address']}</small></p>
             </div>
@@ -281,7 +281,7 @@ if latest is not None:
                         st.markdown(f"""
                         **{i}. {alt_rec['cafe_name']}** - {alt_rec['distance_km']} km away
                         - {alt_rec['address']}
-                        - ⭐ {alt_rec['rating']}/5 rating
+                        - {alt_rec['rating']}/5 rating
                         """)
         else:
             st.info("No recommendations available at this time.")
@@ -325,7 +325,7 @@ if latest is not None and 'recommendations' in locals():
                     border-left: 4px solid #3b82f6;
                     margin-bottom: 10px;
                 ">
-                    <p style="margin: 0; font-size: 16px;"><b>🎵 {i}. {song['title']}</b></p>
+                    <p style="margin: 0; font-size: 16px;"><b>{i}. {song['title']}</b></p>
                     <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">by {song['artist']}</p>
                     <p style="margin: 8px 0 0 0; font-style: italic; font-size: 13px;">{song['reason']}</p>
                 </div>

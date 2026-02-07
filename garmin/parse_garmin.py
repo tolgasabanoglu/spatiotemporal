@@ -18,7 +18,7 @@ RAW_DIR = "/Users/tolgasabanoglu/Desktop/github/spatiotemporal/data/raw"
 os.makedirs(RAW_DIR, exist_ok=True)
 
 # ---- Login to Garmin ----
-print("🔐 Logging into Garmin Connect...")
+print("Logging into Garmin Connect...")
 client = Garmin(EMAIL, PASSWORD)
 client.login()
 
@@ -28,7 +28,7 @@ def save_json(data, name, date_str):
     path = os.path.join(RAW_DIR, filename)
     with open(path, "w") as f:
         json.dump(data, f, indent=2)
-    print(f"✅ Saved {name} → {filename}")
+    print(f"Saved {name} → {filename}")
 
 # ---- Garmin metric fetchers ----
 FETCHERS = {
@@ -42,23 +42,23 @@ FETCHERS = {
 # ---- Date range ----
 START_DATE = datetime.date(2025, 2, 25)
 TODAY = datetime.date.today()
-print(f"\n📆 Fetching Garmin data from {START_DATE} to {TODAY}\n")
+print(f"\nFetching Garmin data from {START_DATE} to {TODAY}\n")
 
 # ---- Loop over dates and metrics ----
 for n in range((TODAY - START_DATE).days + 1):
     single_date = START_DATE + datetime.timedelta(n)
     date_str = single_date.isoformat()
-    print(f"\n📅 {date_str}")
+    print(f"\n{date_str}")
 
     for name, func in FETCHERS.items():
         file_path = os.path.join(RAW_DIR, f"{name}_{date_str}.json")
 
         if os.path.exists(file_path):
-            print(f"⏭️ Skipping {name} for {date_str} (already exists)")
+            print(f"Skipping {name} for {date_str} (already exists)")
             continue
 
         try:
-            print(f"📦 Fetching {name}...")
+            print(f"Fetching {name}...")
             data = func(date_str)
 
             # Validate data
@@ -71,10 +71,10 @@ for n in range((TODAY - START_DATE).days + 1):
             if is_valid:
                 save_json(data, name, date_str)
             else:
-                print(f"🚫 No valid {name} data for {date_str}, skipping.")
+                print(f"No valid {name} data for {date_str}, skipping.")
 
         except Exception as e:
-            print(f"⚠️ Error fetching {name} on {date_str}: {e}")
+            print(f"Error fetching {name} on {date_str}: {e}")
 
     # Avoid hitting rate limits
     time.sleep(1)
