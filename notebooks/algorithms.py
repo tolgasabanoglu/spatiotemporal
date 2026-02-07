@@ -76,7 +76,7 @@ def logistic_reg(df, y, x):
     model.fit(X, y_binary)
 
     # -----------------------------------------------
-    # ✅ ADDED: Print Model Results
+    #  ADDED: Print Model Results
     # -----------------------------------------------
     
     # Training accuracy

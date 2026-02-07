@@ -58,9 +58,9 @@ def deploy_views():
         try:
             job = client.query(sql)
             job.result()  # Wait for completion
-            print(f"    ✅ Success")
+            print(f"     Success")
         except Exception as e:
-            print(f"    ❌ Error: {e}")
+            print(f"     Error: {e}")
 
     print("\n" + "=" * 50)
     print("Deployment complete!")
