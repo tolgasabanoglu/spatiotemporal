@@ -369,7 +369,7 @@ def calculate_distances(cafes_df, home_lat, home_lon):
 
 
 def get_recommendations(stress, sleep_hours, net_battery, resting_hr,
-                       max_distance_km=10, top_n=3):
+                       max_distance_km=None, top_n=3):
     """
     Get coffee shop recommendations based on health metrics
 
@@ -378,7 +378,9 @@ def get_recommendations(stress, sleep_hours, net_battery, resting_hr,
         sleep_hours: Sleep duration
         net_battery: Body battery net change
         resting_hr: Resting heart rate
-        max_distance_km: Maximum distance filter
+        max_distance_km: Maximum distance filter (auto-calculated if None)
+                        - 10km when stress >60 or heavy rain (>5mm)
+                        - 25km when relaxed and nice weather
         top_n: Number of recommendations to return
 
     Returns:
@@ -387,6 +389,15 @@ def get_recommendations(stress, sleep_hours, net_battery, resting_hr,
     try:
         # 1. Fetch current weather
         weather = fetch_berlin_weather()
+
+        # Dynamic distance filtering based on stress and weather (if not manually set)
+        # High stress or heavy rain → stay nearby for convenience
+        # Low stress and nice weather → explore farther for variety
+        if max_distance_km is None:
+            if stress > 60 or weather["precipitation"] > RAIN_THRESHOLD:
+                max_distance_km = 10  # Nearby cafés when stressed or raining
+            else:
+                max_distance_km = 25  # Explore farther when relaxed and nice weather
 
         # 2. Map health → mood features
         features, mood_name = health_to_mood_profile(
