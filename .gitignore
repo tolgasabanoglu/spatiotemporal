@@ -14,7 +14,7 @@ ENV/
 .ipynb_checkpoints
 
 # Data files (large)
-data/raw/*.json
+data/raw/**/*.json
 data/processed/*.csv
 data/processed/*.gpkg
 *.parquet
