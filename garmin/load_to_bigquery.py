@@ -43,11 +43,13 @@ def prepare_rows(directory):
 
 # ------------------- Create or reset table -------------------
 def create_table_if_needed(table_id, reset=False):
+    import time
     try:
         table = client.get_table(table_id)
         if reset:
             print(f" Resetting table: {table_id}")
             client.delete_table(table_id)
+            time.sleep(2)  # Wait for deletion to complete
             raise Exception("Table reset requested")
         # check schema, add missing fields if needed
         required_fields = {"filename", "raw_json"}
@@ -55,6 +57,7 @@ def create_table_if_needed(table_id, reset=False):
         if not required_fields.issubset(existing_fields):
             print(f" Schema mismatch detected. Dropping and recreating table...")
             client.delete_table(table_id)
+            time.sleep(2)  # Wait for deletion to complete
             raise Exception("Table recreated due to schema mismatch")
         print(f" Table exists: {table_id}")
     except Exception:
@@ -64,18 +67,34 @@ def create_table_if_needed(table_id, reset=False):
         ]
         table = bigquery.Table(table_id, schema=schema)
         client.create_table(table)
+        time.sleep(2)  # Wait for table creation to complete
         print(f" Created table with schema: {table_id}")
 
-# ------------------- Upload rows in chunks -------------------
+# ------------------- Upload rows using load job (more reliable) -------------------
 def upload_rows_to_bigquery(table_id, rows, chunk_size=CHUNK_SIZE):
-    for i in range(0, len(rows), chunk_size):
-        chunk = rows[i:i + chunk_size]
-        print(f" Uploading chunk {i // chunk_size + 1}/{(len(rows) - 1) // chunk_size + 1}...")
-        job = client.insert_rows_json(table_id, chunk)
-        if job:
-            print(f" Errors occurred: {job}")
-        else:
-            print(f" Uploaded {len(chunk)} rows successfully")
+    import tempfile
+
+    # Write rows to temp JSON file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        for row in rows:
+            f.write(json.dumps(row) + '\n')
+        temp_file = f.name
+
+    try:
+        # Load from file using a load job
+        print(f" Uploading {len(rows)} rows via load job...")
+        job_config = bigquery.LoadJobConfig(
+            source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+            write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+        )
+
+        with open(temp_file, 'rb') as source_file:
+            job = client.load_table_from_file(source_file, table_id, job_config=job_config)
+
+        job.result()  # Wait for job to complete
+        print(f" Uploaded {len(rows)} rows successfully")
+    finally:
+        os.unlink(temp_file)
 
 # ------------------- Main -------------------
 def main(reset_table=True):
