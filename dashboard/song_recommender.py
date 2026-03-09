@@ -182,7 +182,7 @@ Only return the JSON array, no other text."""
 
     try:
         # Call Gemini API
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
 
         headers = {
             "Content-Type": "application/json"
