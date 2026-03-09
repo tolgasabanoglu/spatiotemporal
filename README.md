@@ -8,7 +8,7 @@ This project processes GPS tracks and activities from Garmin, biometric data (st
 
 ## Key Findings
 
-*Updated February 2026 with 336 observations (Feb 2025 - Feb 2026)*
+*Updated March 2026 with 380+ observations (Feb 2025 - Mar 2026)*
 
 ### Principal Component Analysis
 - **Recovery vs Strain pattern**: PCA reveals that the primary factor explaining stress is a "recovery vs strain" dimension
@@ -189,20 +189,16 @@ jupyter notebook notebooks/
 ## Dashboard Screenshots
 
 ### Health Metrics Overview
-[Screenshot placeholder - Current Status KPIs showing stress, HR, sleep, battery, steps]
+KPI cards showing real-time stress, heart rate, sleep, body battery, and steps pulled live from BigQuery.
 
 ### Coffee Recommendations
-[Screenshot placeholder - ML-powered café recommendation card with mood profile, distance, rating, and reasoning]
-
-*The coffee recommendation system uses a Random Forest Classifier trained on environmental data (parks, bars, greenness, nightlight intensity) to predict which LAP Coffee location best matches your current health state and weather conditions.*
+ML-powered café recommendation card with mood profile, distance, rating, and reasoning — powered by a Random Forest Classifier trained on 16 LAP Coffee locations.
 
 ### Song Recommendations
-[Screenshot placeholder - GenAI-generated playlist with 3 song suggestions matching mood and weather]
-
-*Song recommendations are powered by Google's Gemini API, creating personalized playlists based on your mood profile (derived from health metrics) and current weather.*
+GenAI-generated playlist with song suggestions matching mood and weather — powered by Google's Gemini API.
 
 ### Stress & Sleep Trends
-[Screenshot placeholder - Interactive Plotly charts showing daily stress trends with 7-day rolling average and monthly stress/sleep comparison]
+Interactive Plotly charts showing daily stress trends with 7-day rolling average and monthly stress/sleep comparison.
 
 ---
 
@@ -231,7 +227,8 @@ jupyter notebook notebooks/
 
 - **Python 3.13** with pandas, scikit-learn, scipy, numpy
 - **garminconnect** for Garmin API access
-- **Google BigQuery** for data storage and transformation
+- **Google BigQuery** for data storage and transformation (load jobs for reliable batch uploads)
+- **Apache Airflow** (Docker) for pipeline orchestration and daily scheduling
 - **Streamlit** for interactive dashboard
 - **Plotly** for visualizations
 - **Jupyter** for analysis notebooks
@@ -243,5 +240,5 @@ jupyter notebook notebooks/
 - [ ] Cumulative sleep debt effects
 - [ ] Running intensity zones vs recovery
 - [ ] Seasonal patterns in stress/sleep
-- [ ] Automated daily data fetching (cron/scheduler)
+- [x] Automated daily data fetching (Apache Airflow)
 - [ ] Deploy dashboard to Cloud Run
