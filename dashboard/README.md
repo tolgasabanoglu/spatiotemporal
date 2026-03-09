@@ -1,106 +1,82 @@
 # Garmin Health Dashboard
 
-## Overview
+An interactive Streamlit dashboard that visualizes personal health metrics from Garmin, powered by BigQuery and enriched with ML-based recommendations.
 
-This folder contains resources for visualizing Garmin health metrics using Looker Studio (formerly Google Data Studio) connected to BigQuery.
+---
 
-## Setup
+## Features
 
-### 1. Deploy Dashboard Views to BigQuery
+- **Health KPIs**: Real-time stress, heart rate, sleep, body battery, and steps
+- **Coffee Recommendations**: Random Forest Classifier matching health state to LAP Coffee locations in Berlin
+- **Song Recommendations**: Gemini API generating playlists based on mood profile and weather
+- **Stress Trends**: Daily stress with 7-day rolling average
+- **Sleep Analysis**: Sleep hours over last 30 days
+- **Body Battery**: Charged vs drained visualization
+- **Correlations**: Sleep vs stress, body battery vs stress scatter plots
+- **Feature Importance**: Random Forest analysis of stress predictors
+- **Monthly Summary**: Stress and sleep trends by month
 
-```bash
-cd /Users/tolgasabanoglu/Desktop/github/spatiotemporal
-python dashboard/deploy_dashboard_views.py
-```
+---
 
-This creates optimized views for dashboards:
-- `v_dashboard_daily` - Daily metrics with categories
-- `v_dashboard_weekly` - Weekly aggregates
-- `v_dashboard_monthly` - Monthly summaries
-- `v_dashboard_correlations` - For scatter plots
-- `v_dashboard_trends` - 7-day rolling averages
-
-### 2. Create Looker Studio Dashboard
-
-1. Go to [Looker Studio](https://lookerstudio.google.com)
-2. Click **Create** → **Data Source**
-3. Select **BigQuery** connector
-4. Choose project: `spatiotemporal-473309`
-5. Choose dataset: `garmin_data`
-6. Select view: `v_dashboard_daily` (or others as needed)
-
-### 3. Suggested Dashboard Layout
-
-#### Page 1: Overview
-| Widget | Data Source | Metrics |
-|--------|-------------|---------|
-| Scorecard | v_dashboard_daily | Current avg_stress |
-| Scorecard | v_dashboard_daily | Current resting_hr |
-| Time Series | v_dashboard_trends | stress_7d_avg over time |
-| Pie Chart | v_dashboard_daily | stress_category distribution |
-
-#### Page 2: Sleep Analysis
-| Widget | Data Source | Metrics |
-|--------|-------------|---------|
-| Time Series | v_dashboard_daily | sleep_hours by date |
-| Bar Chart | v_dashboard_weekly | avg_sleep_hours by week |
-| Scatter | v_dashboard_correlations | sleep_hours vs next_day_stress |
-
-#### Page 3: Recovery
-| Widget | Data Source | Metrics |
-|--------|-------------|---------|
-| Gauge | v_dashboard_daily | net_battery (latest) |
-| Time Series | v_dashboard_daily | charged, drained over time |
-| Bar Chart | v_dashboard_monthly | avg_net_battery by month |
-
-## Alternative: Streamlit Dashboard
-
-For a local Python dashboard, use:
+## Run the Dashboard
 
 ```bash
-pip install streamlit plotly
+cd spatiotemporal
+source venv/bin/activate
 streamlit run dashboard/streamlit_app.py
 ```
 
-## Dashboard Screenshots
+Open http://localhost:8501
 
-### Current Status & Recommendations
-![Dashboard Overview](screenshots/Screenshot%202026-02-03%20at%2015.09.21.png)
-*Health metrics KPIs with ML-powered coffee recommendations (LAP Coffee) and GenAI song suggestions*
-
-### Trends & Analysis
-![Stress and Sleep Trends](screenshots/Screenshot%202026-02-03%20at%2015.10.11.png)
-*Daily stress trends with 7-day rolling average, sleep hours (last 30 days), and body battery charged vs drained*
-
-### Correlations & Feature Importance
-![Correlations and ML Insights](screenshots/Screenshot%202026-02-03%20at%2015.10.30.png)
-*Sleep vs Stress and Body Battery vs Stress scatter plots with Random Forest feature importance analysis*
-
-## Views Reference
-
-### v_dashboard_daily
-All daily metrics with derived fields like `stress_level_num`, `recovery_status`, `activity_level`.
-
-### v_dashboard_weekly
-Weekly aggregates including `high_stress_days`, `avg_sleep_hours`, `days_with_steps`.
-
-### v_dashboard_monthly
-Monthly summaries with `high_stress_pct`, `poor_sleep_days`, `steps_coverage_pct`.
-
-### v_dashboard_correlations
-Includes lagged fields (`next_day_stress`, `prev_day_sleep`) for correlation analysis.
-
-### v_dashboard_trends
-7-day rolling averages and week-over-week changes for trend analysis.
+---
 
 ## Data Refresh
 
-Data is refreshed when you run:
+Data is fetched and loaded automatically via Apache Airflow (daily at 2 AM). To run manually:
+
 ```bash
-python garmin/parse_garmin.py      # Fetch new data
-python garmin/load_to_bigquery.py  # Upload to BigQuery
-python garmin/deploy_views.py      # Refresh base views
+source venv/bin/activate
+python garmin/parse_garmin.py           # Fetch new data from Garmin API
+python garmin/load_to_bigquery.py       # Upload to BigQuery
+python garmin/deploy_views.py           # Refresh base views
 python dashboard/deploy_dashboard_views.py  # Refresh dashboard views
 ```
 
-Looker Studio will automatically pick up new data on each report view.
+---
+
+## BigQuery Views
+
+| View | Purpose |
+|------|---------|
+| `v_dashboard_daily` | Daily metrics with categories and derived fields |
+| `v_dashboard_weekly` | Weekly aggregates (high stress days, avg sleep) |
+| `v_dashboard_monthly` | Monthly summaries with coverage stats |
+| `v_dashboard_correlations` | Lagged fields for sleep/stress correlation analysis |
+| `v_dashboard_trends` | 7-day rolling averages and week-over-week changes |
+
+---
+
+## Looker Studio (Alternative)
+
+Connect directly to BigQuery:
+
+1. Go to [Looker Studio](https://lookerstudio.google.com)
+2. Create → Data Source → BigQuery
+3. Project: `spatiotemporal-473309`, Dataset: `garmin_data`
+4. Select any `v_dashboard_*` view
+
+---
+
+## Screenshots
+
+### Current Status & Recommendations
+![Dashboard Overview](screenshots/Screenshot%202026-02-03%20at%2015.09.21.png)
+*Health metrics KPIs with ML-powered coffee recommendations and GenAI song suggestions*
+
+### Trends & Analysis
+![Stress and Sleep Trends](screenshots/Screenshot%202026-02-03%20at%2015.10.11.png)
+*Daily stress trends with 7-day rolling average, sleep hours (last 30 days), body battery*
+
+### Correlations & Feature Importance
+![Correlations and ML Insights](screenshots/Screenshot%202026-02-03%20at%2015.10.30.png)
+*Sleep vs Stress and Body Battery vs Stress scatter plots with Random Forest feature importance*
