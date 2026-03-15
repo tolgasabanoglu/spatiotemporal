@@ -12,7 +12,6 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from google.cloud import bigquery
-from sklearn.ensemble import RandomForestRegressor
 
 # Config
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,7 +19,7 @@ CREDENTIALS_PATH = os.path.join(PROJECT_ROOT, "spatiotemporal-key.json")
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = CREDENTIALS_PATH
 
 st.set_page_config(
-    page_title="Garmin Health Dashboard",
+    page_title="Spatiotemporal — Health & Environment",
     layout="wide"
 )
 
@@ -64,7 +63,7 @@ except Exception as e:
     st.stop()
 
 # Header
-st.title("Garmin Health Dashboard")
+st.title("Spatiotemporal — Health & Environment Dashboard")
 st.markdown(f"**Data range:** {df['date'].min().strftime('%Y-%m-%d')} to {df['date'].max().strftime('%Y-%m-%d')} ({len(df)} days)")
 
 # Sidebar filters
@@ -152,71 +151,73 @@ st.header("Today's Coffee Recommendation")
 # Info box explaining the methodology
 with st.expander("How does this recommendation work?"):
     st.markdown("""
-    ### Machine Learning-Based Café Recommendation System
+    ### Two-Phase ML Café Recommendation System
 
-    This system uses a **Random Forest Classifier (RFC)** trained on full-year environmental data from 15 LAP Coffee locations in Berlin. Here's how it works:
-
-    #### 1. Health-to-Mood Mapping
-    Your Garmin biometrics are analyzed to determine your current mood profile:
-    - **Stress level** (0-100): High stress suggests need for calm environments
-    - **Sleep hours**: Poor sleep indicates recovery needs
-    - **Body battery**: Energy levels guide activity preferences
-    - **Resting heart rate**: Overall wellness indicator
-
-    **Example mood profiles:**
-    - *Cozy Indoor*: High stress + cold weather → need warmth & comfort
-    - *Green Nature*: High stress + nice weather → seek restorative greenery
-    - *Buzz Urban*: Low stress + energized → want vibrant social atmosphere
-    - *Rainy Retreat*: Rainy weather → sheltered cozy space
-
-    #### 2. Mood-to-Environmental Features Translation
-    Each mood profile maps to specific environmental characteristics:
-
-    | Feature | Description | Example Values |
-    |---------|-------------|----------------|
-    | **Parks (1km)** | Number of parks within 1km | Cozy: 8, Buzz: 3 |
-    | **Bars (500m)** | Open bars within 500m | Cozy: 2, Buzz: 20 |
-    | **NDVI** | Greenness index (0-1, satellite data) | Green: 0.70, Urban: 0.30 |
-    | **Nightlight** | Light pollution/urban activity (0-100) | Cozy: 25, Buzz: 65 |
-    | **Weather** | Temperature & precipitation | Cold: <5°C, Warm: >20°C |
-
-    #### 3. Random Forest Classification
-    The trained model predicts café suitability:
-    - **Model type**: Multi-class Random Forest Classifier
-    - **Classes**: 15 LAP Coffee locations
-    - **Training data**: ~4,288 observations (Full year 2024: Winter, Spring, Summer, Autumn)
-    - **Accuracy**: ~98% on test set
-    - **Key learnings**:
-      - "Cafés with high parks & low bars = quiet residential areas"
-      - "Summer: higher NDVI (greenness), outdoor preferences"
-      - "Winter: cozy indoor spots preferred"
-
-    **How it predicts:**
-    ```
-    Input: [parks=8, bars=2, ndvi=0.45, temp=-1°C, ...]
-    Output: {
-        "LAP Coffee - Kastanienallee": 49% confidence,
-        "LAP Coffee - Falckensteinstraße": 41% confidence,
-        "LAP Coffee - Akazienstraße": 2% confidence,
-        ...
-    }
-    ```
-
-    #### 4. Location Filtering & Ranking
-    - Filter cafés within 5km of your home (Bruchsaler Str. 10715)
-    - Rank by model confidence (probability score)
-    - Consider café rating and distance
-    - Return top 3 recommendations
-
-    #### Model Performance
-     **Trained on complete full-year data** (Dec 2023 - Nov 2024, 3,648 observations)
-    - **97.7% test accuracy** across all seasons
-    - Robust predictions for all weather conditions (-5°C to 30°C)
-    - Captures seasonal variations in NDVI, temperature, and café preferences
-    - **Dynamic distance filtering**: Explores farther cafés when you're relaxed and weather is nice
+    Instead of predicting a specific café directly, the system first learns **what kind of environment you need**
+    from how you've been feeling — then finds which LAP Coffee locations currently match that environment.
 
     ---
-    *Model feature importance: Parks (34.8%) + Bars (34.4%) + NDVI (11.3%) + Nightlight (10.0%) = 90% of prediction power*
+
+    #### Phase 1 — Mood Clustering (Unsupervised)
+
+    K-Means clustering (k=4) was applied to a full year of environmental data across all LAP Coffee locations.
+    Each location × date observation was clustered based on dynamic environmental features only
+    (static neighborhood features like parks/bars were excluded to avoid location memorisation).
+
+    | Mood | NDVI | Nightlight | Temp | Rain | Description |
+    |------|------|------------|------|------|-------------|
+    | **summer_green** | 0.34 | low | 21°C | dry | Warm, green, low urban activity |
+    | **sunny_urban** | 0.14 | very low | 24°C | dry | Hot, dry, city energy |
+    | **winter_cozy** | 0.13 | high | 8°C | light | Cold, dark, sheltered |
+    | **rainy_day** | 0.16 | mid | 19°C | heavy | Wet, mild, indoor |
+
+    ---
+
+    #### Phase 2 — Mood Classification (Supervised)
+
+    A classifier is trained to predict your current mood from **lagged Garmin biometrics** —
+    not just today's snapshot, but how you've been feeling over the past few days:
+
+    | Feature | Lag | Why |
+    |---------|-----|-----|
+    | Stress | 1-day, 7-day rolling avg | Accumulated tension |
+    | Sleep hours | 1-day, 3-day rolling avg | Sleep debt |
+    | REM sleep | 1-day lag | Recovery quality |
+    | Body battery | 1-day, 3-day rolling avg | Energy drain over time |
+    | Resting HR | 1-day lag | Physiological baseline |
+
+    ---
+
+    #### Recommendation
+
+    Once your mood is predicted, each café is scored against today's actual environmental conditions:
+
+    ```
+    final_score = 60% × environment_match + 40% × proximity
+    ```
+
+    - **Environment match**: Euclidean distance between today's café conditions and the predicted mood centroid
+    - **Proximity**: Distance from current location
+
+    Top 3 cafés are returned.
+
+    ---
+
+    #### Stress Analysis Model Results
+
+    Trained on 384 days of Garmin data (Feb 2025 – Mar 2026):
+
+    | Model | Task | Result |
+    |-------|------|--------|
+    | PCA | Dimensionality reduction | PC1 explains 59% variance (strain vs recovery axis) |
+    | Logistic Regression | Classify high stress days (>50) | Test accuracy = 92.5% |
+
+    **Top protective factors against high stress:**
+    - Charged body battery (coefficient −0.82)
+    - Body battery change (coefficient −0.56)
+
+    ---
+    *Clustering features: NDVI · nightlight · temp_max · temp_min · precip_mm*
     """)
 
 if latest is not None:
@@ -392,82 +393,140 @@ with col2:
     )
     st.plotly_chart(fig_battery, use_container_width=True)
 
-# Correlation
-st.header("Correlations")
+# Relationships
+st.header("Relationships")
+
 col1, col2 = st.columns(2)
 
 with col1:
-    fig_corr1 = px.scatter(
-        df_filtered.dropna(subset=['sleep_hours', 'avg_stress']),
-        x='sleep_hours', y='avg_stress',
+    # Sleep battery recovery vs stress (r = -0.637)
+    fig_slp_bat = px.scatter(
+        df_filtered.dropna(subset=['sleep_body_battery_change', 'avg_stress']),
+        x='sleep_body_battery_change', y='avg_stress',
         trendline='ols',
-        title="Sleep vs Stress"
+        labels={'sleep_body_battery_change': 'Battery Recovered During Sleep', 'avg_stress': 'Avg Stress'},
+        title="Sleep Recovery vs Stress"
     )
-    st.plotly_chart(fig_corr1, use_container_width=True)
+    st.plotly_chart(fig_slp_bat, use_container_width=True)
 
 with col2:
+    # Net battery vs stress
     fig_corr2 = px.scatter(
         df_filtered.dropna(subset=['net_battery', 'avg_stress']),
         x='net_battery', y='avg_stress',
         trendline='ols',
-        title="Net Battery vs Stress"
+        labels={'net_battery': 'Net Body Battery', 'avg_stress': 'Avg Stress'},
+        title="Body Battery vs Stress"
     )
     st.plotly_chart(fig_corr2, use_container_width=True)
 
-# Feature Importance
-st.header("What Affects Your Stress?")
-st.markdown("*Random Forest feature importance - which factors have the biggest impact on stress levels*")
+col3, col4 = st.columns(2)
 
-# Prepare data for Random Forest
-feature_cols = ['charged', 'drained', 'net_battery', 'resting_hr', 'sleep_hours',
-                'deep_sleep_hours', 'rem_sleep_hours', 'steps']
-available_features = [c for c in feature_cols if c in df_filtered.columns]
-
-rf_data = df_filtered[available_features + ['avg_stress']].dropna()
-
-if len(rf_data) > 20:
-    X = rf_data[available_features]
-    y = rf_data['avg_stress']
-
-    # Train Random Forest
-    rf = RandomForestRegressor(n_estimators=100, random_state=42, max_depth=5)
-    rf.fit(X, y)
-
-    # Get feature importance
-    importance_df = pd.DataFrame({
-        'Feature': available_features,
-        'Importance': rf.feature_importances_
-    }).sort_values('Importance', ascending=True)
-
-    # Color by positive/negative correlation with stress
-    colors = []
-    for feat in importance_df['Feature']:
-        corr = rf_data[feat].corr(rf_data['avg_stress'])
-        colors.append('red' if corr > 0 else 'green')
-
-    fig_importance = go.Figure(go.Bar(
-        x=importance_df['Importance'],
-        y=importance_df['Feature'],
-        orientation='h',
-        marker_color=colors
+with col3:
+    # Resting HR rolling avg vs stress rolling avg — dual axis
+    trend_df = df_filtered[['date', 'avg_stress', 'resting_hr']].dropna().copy()
+    trend_df['stress_7d'] = trend_df['avg_stress'].rolling(7).mean()
+    trend_df['hr_7d'] = trend_df['resting_hr'].rolling(7).mean()
+    trend_df = trend_df.dropna()
+    fig_hr = go.Figure()
+    fig_hr.add_trace(go.Scatter(
+        x=trend_df['date'], y=trend_df['stress_7d'],
+        name='Stress (7d avg)', line=dict(color='coral')
     ))
-    fig_importance.update_layout(
-        title="Feature Importance for Predicting Stress<br><sub>Green = reduces stress | Red = increases stress</sub>",
-        xaxis_title="Importance",
-        yaxis_title="Feature",
-        height=400
+    fig_hr.add_trace(go.Scatter(
+        x=trend_df['date'], y=trend_df['hr_7d'],
+        name='Resting HR (7d avg)', line=dict(color='steelblue'),
+        yaxis='y2'
+    ))
+    fig_hr.update_layout(
+        title="Resting HR vs Stress Over Time",
+        yaxis=dict(title='Stress Level'),
+        yaxis2=dict(title='Resting HR (bpm)', overlaying='y', side='right'),
+        height=400, legend=dict(orientation='h')
     )
-    st.plotly_chart(fig_importance, use_container_width=True)
+    st.plotly_chart(fig_hr, use_container_width=True)
 
-    # Show top insights
-    top_features = importance_df.tail(3)['Feature'].tolist()
-    st.markdown("**Key Insights:**")
-    for feat in reversed(top_features):
-        corr = rf_data[feat].corr(rf_data['avg_stress'])
-        direction = "increases" if corr > 0 else "decreases"
-        st.markdown(f"- **{feat}**: Higher values {direction} stress")
+with col4:
+    # Stress by day of week
+    dow_df = df_filtered[['date', 'avg_stress']].dropna().copy()
+    dow_df['day_of_week'] = pd.to_datetime(dow_df['date']).dt.day_name()
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    dow_df['day_of_week'] = pd.Categorical(dow_df['day_of_week'], categories=day_order, ordered=True)
+    fig_dow = px.box(
+        dow_df.sort_values('day_of_week'),
+        x='day_of_week', y='avg_stress',
+        labels={'day_of_week': '', 'avg_stress': 'Avg Stress'},
+        title="Stress by Day of Week"
+    )
+    fig_dow.add_hline(y=50, line_dash='dash', line_color='red', opacity=0.4)
+    st.plotly_chart(fig_dow, use_container_width=True)
+
+# HRV vs Stress
+st.header("HRV vs Stress")
+hrv_df = df_filtered.dropna(subset=['avg_overnight_hrv', 'avg_stress'])
+if len(hrv_df) > 10:
+    col1, col2 = st.columns(2)
+    with col1:
+        fig_hrv = px.scatter(
+            hrv_df, x='avg_overnight_hrv', y='avg_stress',
+            trendline='ols',
+            labels={'avg_overnight_hrv': 'Overnight HRV (ms)', 'avg_stress': 'Avg Stress'},
+            title=f"HRV vs Stress (r = -0.59, n={len(hrv_df)})"
+        )
+        st.plotly_chart(fig_hrv, use_container_width=True)
+    with col2:
+        hrv_trend = hrv_df[['date', 'avg_overnight_hrv', 'avg_stress']].copy()
+        hrv_trend['hrv_7d'] = hrv_trend['avg_overnight_hrv'].rolling(7).mean()
+        hrv_trend['stress_7d'] = hrv_trend['avg_stress'].rolling(7).mean()
+        hrv_trend = hrv_trend.dropna()
+        fig_hrv_trend = go.Figure()
+        fig_hrv_trend.add_trace(go.Scatter(
+            x=hrv_trend['date'], y=hrv_trend['stress_7d'],
+            name='Stress (7d avg)', line=dict(color='coral')
+        ))
+        fig_hrv_trend.add_trace(go.Scatter(
+            x=hrv_trend['date'], y=hrv_trend['hrv_7d'],
+            name='HRV (7d avg)', line=dict(color='mediumseagreen'),
+            yaxis='y2'
+        ))
+        fig_hrv_trend.update_layout(
+            title="HRV vs Stress Over Time",
+            yaxis=dict(title='Stress Level'),
+            yaxis2=dict(title='HRV (ms)', overlaying='y', side='right'),
+            height=400, legend=dict(orientation='h')
+        )
+        st.plotly_chart(fig_hrv_trend, use_container_width=True)
 else:
-    st.warning("Not enough data for feature importance analysis (need at least 20 days)")
+    st.info("Not enough HRV data available yet.")
+
+# Stress Calendar Heatmap
+st.header("Stress Calendar")
+cal_df = df_filtered[['date', 'avg_stress']].dropna().copy()
+cal_df['date'] = pd.to_datetime(cal_df['date'])
+cal_df['week'] = cal_df['date'].dt.isocalendar().week.astype(int)
+cal_df['year'] = cal_df['date'].dt.isocalendar().year.astype(int)
+cal_df['year_week'] = cal_df['year'].astype(str) + '-W' + cal_df['week'].astype(str).str.zfill(2)
+cal_df['weekday'] = cal_df['date'].dt.weekday  # 0=Mon, 6=Sun
+
+pivot = cal_df.pivot_table(index='weekday', columns='year_week', values='avg_stress', aggfunc='mean')
+pivot = pivot.sort_index()
+
+fig_cal = go.Figure(data=go.Heatmap(
+    z=pivot.values,
+    x=pivot.columns.tolist(),
+    y=['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    colorscale='RdYlGn_r',
+    zmin=20, zmax=70,
+    colorbar=dict(title='Stress'),
+    hoverongaps=False
+))
+fig_cal.update_layout(
+    title="Daily Stress Heatmap (green = low stress, red = high)",
+    xaxis=dict(showticklabels=False),
+    height=280,
+    margin=dict(l=40, r=40, t=50, b=20)
+)
+st.plotly_chart(fig_cal, use_container_width=True)
 
 # Monthly Summary
 st.header("Monthly Summary")

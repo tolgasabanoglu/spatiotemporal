@@ -1,30 +1,63 @@
 # Spatiotemporal
 
-A personal health analytics toolkit that integrates movement, health metrics, and environmental context across space and time.
+A personal analytics project that connects Garmin biometrics, satellite environmental data, and weather to answer two questions:
 
-This project processes GPS tracks and activities from Garmin, biometric data (steps, stress, sleep, heart rate, body battery), and environmental layers (NDVI) to create enriched daily summaries and uncover insights about how lifestyle factors affect well-being.
+1. **What predicts my stress levels?**
+2. **Which café should I visit today?**
 
 ---
 
-## Key Findings
+## Methodology
 
-*Updated March 2026 with 380+ observations (Feb 2025 - Mar 2026)*
+### Part 1 — Stress Analysis
 
-### Principal Component Analysis
-- **Recovery vs Strain pattern**: PCA reveals that the primary factor explaining stress is a "recovery vs strain" dimension
-- **PC1 (43.8% variance)**: Sleep quality drives the main recovery axis - higher total sleep and REM sleep = better recovery and lower stress
-- **Strongest loadings**: REM sleep hours (0.598), total sleep hours (0.517), resting heart rate (-0.465)
+```
+Garmin API → BigQuery → SQL views → notebooks/stress_analysis.ipynb
+```
 
-### Predictive Model Performance
-- **Random Forest Regression**: Successfully predicts continuous stress levels (R² = 0.406, RMSE = 6.71)
-- **Top predictors**: REM sleep hours (27.9%), net body battery (23.5%), resting heart rate (20.8%)
-- **Logistic Regression**: High accuracy (92.6% test set) for classifying high stress days (>50) vs normal days (≤50)
+Daily biometrics (stress, sleep, heart rate, body battery) are fetched from Garmin Connect, stored in BigQuery, and cleaned via SQL views. The notebook runs three analyses:
 
-### Protective Factors
-- **Sleep quality is paramount**: REM sleep has the strongest protective effect (-0.859 coefficient) against high stress
-- **Deep sleep matters**: Second strongest protective factor (-0.503 coefficient)
-- **Total sleep hours**: Consistent sleep duration (-0.374 coefficient) reduces stress odds
-- **Actionable insight**: Prioritize sleep quality (especially REM and deep sleep) to manage stress effectively
+- **PCA** — identifies the main dimensions of variation (PC1: strain vs recovery, 59% variance)
+- **Random Forest regression** — predicts continuous stress level (R² = 0.483, RMSE = 5.39)
+- **Logistic regression** — classifies high stress days >50 (test accuracy: 92.5%)
+
+Key finding: charged body battery is the strongest protective factor against high stress days.
+
+| Model | Task | Result |
+|-------|------|--------|
+| PCA | Dimensionality reduction | PC1 explains 59% variance (strain vs recovery) |
+| Logistic Regression | Classify high stress days (>50) | Test accuracy = 92.5% |
+
+---
+
+### Part 2 — Café Recommendation
+
+```
+LAP Coffee locations + environmental data → K-Means clustering → mood labels
+Garmin biometrics (lagged) → mood classifier → café ranking
+```
+
+**Phase 1 — Mood clustering (unsupervised)**
+
+K-Means (k=4) on environmental features (NDVI, nightlight, temperature, rain) across all LAP Coffee locations and dates. Produces 4 mood-environment types:
+
+| Mood | Temp | NDVI | Nightlight | Rain |
+|------|------|------|------------|------|
+| `summer_green` | 21°C | 0.34 | low | dry |
+| `sunny_urban` | 24°C | 0.14 | very low | dry |
+| `winter_cozy` | 8°C | 0.13 | high | light |
+| `rainy_day` | 19°C | 0.16 | mid | heavy |
+
+**Phase 2 — Mood classification (supervised)**
+
+Classifier trained on lagged Garmin biometrics (stress, sleep, body battery, HR over 1–7 days) to predict which mood type you need today.
+
+**Recommendation**
+
+Each café is scored against today's actual environmental conditions:
+```
+final_score = 60% × environment_match + 40% × proximity
+```
 
 ---
 
@@ -32,213 +65,37 @@ This project processes GPS tracks and activities from Garmin, biometric data (st
 
 ```
 spatiotemporal/
-├── garmin/                       # Data fetching and ETL
-│   ├── parse_garmin.py          # Fetch daily metrics from Garmin API
-│   ├── activities.py            # Fetch activity data (running, cycling, etc.)
-│   ├── load_to_bigquery.py      # Upload raw JSON to BigQuery
-│   ├── deploy_views.py          # Deploy SQL transformation views
-│   └── sql/
-│       └── views.sql            # BigQuery views for data transformation
-│
-├── dashboard/                    # Visualization
-│   ├── streamlit_app.py         # Interactive Streamlit dashboard
-│   ├── coffee_recommender.py    # ML-powered café recommendations (RFC)
-│   ├── song_recommender.py      # GenAI-powered music suggestions (Gemini API)
-│   ├── COFFEE_RECOMMENDATIONS.md # Technical documentation for RFC model
-│   ├── deploy_dashboard_views.py # Deploy dashboard-specific views
-│   ├── looker_views.sql         # Views optimized for Looker Studio
-│   └── README.md                # Dashboard setup instructions
-│
-├── notebooks/                    # Analysis notebooks
-│   ├── analysis.ipynb           # Main analysis: PCA, ML models, feature importance
-│   ├── next_day_analysis.ipynb  # Lagged analysis: running/sleep → next-day stress
-│   └── algorithms.py            # Reusable ML algorithms
-│
-├── data/
-│   ├── raw/                     # Raw JSON exports from Garmin API
-│   │   └── activities/          # Activity-specific data
-│   ├── processed/               # Cleaned, merged datasets
-│   └── external/                # Environmental data (NDVI, elevation)
-│
-├── requirements.txt             # Python dependencies
-└── README.md
+├── garmin/                    # Garmin API → BigQuery ETL
+├── lap-cafe/
+│   ├── ingestion/             # Fetch café locations + env data
+│   ├── clustering/            # Phase 1: K-Means mood clustering
+│   ├── classification/        # Phase 2: biometrics → mood classifier
+│   └── recommender.py         # Café scoring + ranking
+├── dashboard/                 # Streamlit app
+├── notebooks/
+│   ├── stress_analysis.ipynb
+│   └── lap_mood_clustering.ipynb
+└── data/
+    ├── raw/                   # Garmin JSON exports
+    └── lap-cafe/              # Café env data + cluster outputs
 ```
 
 ---
 
-## Data Pipeline
+## Stack
 
-```
-Garmin API → parse_garmin.py → data/raw/*.json
-                                    ↓
-                         load_to_bigquery.py
-                                    ↓
-                    garmin_data.garmin_raw_data (raw JSON)
-                                    ↓
-                          deploy_views.py
-                                    ↓
-                    ┌───────────────┴───────────────┐
-                    ↓                               ↓
-            v_daily_metrics                 v_dashboard_daily
-            (analysis-ready)                (dashboard-ready)
-                    ↓                               ↓
-              notebooks/                    dashboard/streamlit_app.py
-```
-
-### BigQuery Views
-
-| View | Purpose |
-|------|---------|
-| `v_steps_daily` | Daily step totals, NULL for invalid days (steps=0) |
-| `v_body_battery_daily` | Charged/drained metrics |
-| `v_heart_rate_daily` | Resting HR, min/max HR |
-| `v_stress_daily` | Avg/max stress with categories |
-| `v_sleep_daily` | Sleep hours, HRV, body battery change |
-| `v_daily_metrics` | Merged daily view for analysis |
-| `v_data_quality_summary` | Monthly coverage stats |
-| `v_dashboard_*` | Dashboard-optimized views with trends |
+Python · scikit-learn · BigQuery · Streamlit · Google Earth Engine · Plotly
 
 ---
 
-## Setup
-
-### 1. Clone and create virtual environment
+## Run
 
 ```bash
-git clone <repo-url>
-cd spatiotemporal
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2. Configure Garmin credentials
-
-Create a `.env` file in the `garmin/` directory:
-
-```bash
-echo "USERNAME=your_garmin_email@example.com" > garmin/.env
-echo "PASSWORD=your_garmin_password" >> garmin/.env
-```
-
-### 3. Configure BigQuery
-
-Place your Google Cloud service account key as `spatiotemporal-key.json` in the project root.
-
----
-
-## Usage
-
-### Fetch and Load Data
-
-```bash
-source venv/bin/activate
-
-# 1. Fetch daily metrics from Garmin API
+# Refresh Garmin data
 python garmin/parse_garmin.py
-
-# 2. Fetch activities (running, cycling, etc.)
-python garmin/activities.py
-
-# 3. Upload to BigQuery
 python garmin/load_to_bigquery.py
-
-# 4. Deploy transformation views
 python garmin/deploy_views.py
 
-# 5. Deploy dashboard views
-python dashboard/deploy_dashboard_views.py
-```
-
-### Run Dashboard
-
-```bash
+# Dashboard
 streamlit run dashboard/streamlit_app.py
 ```
-
-Open http://localhost:8501 to view the dashboard.
-
-### Run Analysis Notebooks
-
-```bash
-jupyter notebook notebooks/
-```
-
----
-
-## Dashboard Features
-
-- **Current Status**: KPI cards for stress, HR, sleep, body battery, steps
-- **Coffee Recommendations** (NEW): ML-powered café suggestions based on health metrics and mood
-  - Random Forest Classifier trained on 16 LAP Coffee locations
-  - Maps health biometrics → mood profiles → environmental features → café predictions
-  - Considers proximity, weather, greenness (NDVI), and neighborhood characteristics
-  - Detailed explanations with confidence scores
-- **Song Recommendations** (NEW): GenAI-powered music suggestions matching mood and weather
-  - Gemini API integration with curated fallback playlists
-  - Personalized selections for 6 mood profiles (cozy, green, buzz, rainy, recharge, balanced)
-- **Stress Trends**: Daily stress with 7-day rolling average
-- **Sleep Analysis**: Sleep hours over last 30 days
-- **Body Battery**: Charged vs drained visualization
-- **Correlations**: Sleep vs stress, body battery vs stress scatter plots
-- **Feature Importance**: Random Forest analysis of stress predictors
-- **Monthly Summary**: Stress and sleep trends by month
-
----
-
-## Dashboard Screenshots
-
-### Health Metrics Overview
-KPI cards showing real-time stress, heart rate, sleep, body battery, and steps pulled live from BigQuery.
-
-### Coffee Recommendations
-ML-powered café recommendation card with mood profile, distance, rating, and reasoning — powered by a Random Forest Classifier trained on 16 LAP Coffee locations.
-
-### Song Recommendations
-GenAI-generated playlist with song suggestions matching mood and weather — powered by Google's Gemini API.
-
-### Stress & Sleep Trends
-Interactive Plotly charts showing daily stress trends with 7-day rolling average and monthly stress/sleep comparison.
-
----
-
-## Data Sources
-
-| Source | Metrics |
-|--------|---------|
-| Garmin Connect | Steps, sleep, stress, heart rate, body battery, activities |
-| Activities | Running distance, duration, HR zones, training effect, calories |
-| Environmental | NDVI (vegetation index), elevation |
-
----
-
-## Analysis Notebooks
-
-### `analysis.ipynb`
-- Loads data from BigQuery views
-- PCA analysis to identify key health dimensions
-- Random Forest regression for stress prediction
-- Logistic regression for high-stress classification
-- Feature importance visualization
-
----
-
-## Tech Stack
-
-- **Python 3.13** with pandas, scikit-learn, scipy, numpy
-- **garminconnect** for Garmin API access
-- **Google BigQuery** for data storage and transformation (load jobs for reliable batch uploads)
-- **Apache Airflow** (Docker) for pipeline orchestration and daily scheduling
-- **Streamlit** for interactive dashboard
-- **Plotly** for visualizations
-- **Jupyter** for analysis notebooks
-
----
-
-## Future Work
-
-- [ ] Cumulative sleep debt effects
-- [ ] Running intensity zones vs recovery
-- [ ] Seasonal patterns in stress/sleep
-- [x] Automated daily data fetching (Apache Airflow)
-- [ ] Deploy dashboard to Cloud Run
