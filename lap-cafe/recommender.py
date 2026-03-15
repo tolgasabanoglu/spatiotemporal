@@ -27,7 +27,7 @@ CLUSTER_FEATURES = ["ndvi", "nightlight", "temp_max", "temp_min", "precip_mm"]
 # Home coordinates (Bruchsaler Str., Berlin)
 HOME_LAT = 52.4937
 HOME_LON = 13.3418
-MAX_DISTANCE_KM = 10.0
+MAX_DISTANCE_KM = None  # No distance limit — rank all cafés
 
 
 def haversine(lat1, lon1, lat2, lon2) -> float:
@@ -71,7 +71,7 @@ def score_cafes(mood: str, today_env: pd.DataFrame) -> pd.DataFrame:
 
         # Proximity score
         distance_km = haversine(HOME_LAT, HOME_LON, cafe["lat"], cafe["lon"])
-        proximity_score = max(0, (1 - distance_km / MAX_DISTANCE_KM) * 100)
+        proximity_score = max(0, 100 - distance_km * 5)  # ~20km = 0 score
 
         # Final: 60% environment match, 40% proximity
         final_score = env_score * 0.6 + proximity_score * 0.4
@@ -91,5 +91,4 @@ def score_cafes(mood: str, today_env: pd.DataFrame) -> pd.DataFrame:
 def recommend(mood: str, today_env: pd.DataFrame, top_n: int = 3) -> list[dict]:
     """Return top N café recommendations for the given mood."""
     ranked = score_cafes(mood, today_env)
-    ranked = ranked[ranked["distance_km"] <= MAX_DISTANCE_KM]
     return ranked.head(top_n).to_dict(orient="records")

@@ -249,7 +249,7 @@ if latest is not None:
             sleep_hours=sleep,
             net_battery=net_battery,
             resting_hr=resting_hr,
-            max_distance_km=10,  # Increased from 5km to include more options
+            max_distance_km=None,  # No distance limit — show all cafés
             top_n=3
         )
 
