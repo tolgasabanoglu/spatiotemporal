@@ -18,7 +18,6 @@ Garmin API → BigQuery → SQL views → notebooks/stress_analysis.ipynb
 Daily biometrics (stress, sleep, heart rate, body battery) are fetched from Garmin Connect, stored in BigQuery, and cleaned via SQL views. The notebook runs three analyses:
 
 - **PCA** — identifies the main dimensions of variation (PC1: strain vs recovery, 59% variance)
-- **Random Forest regression** — predicts continuous stress level (R² = 0.483, RMSE = 5.39)
 - **Logistic regression** — classifies high stress days >50 (test accuracy: 92.5%)
 
 Key finding: charged body battery is the strongest protective factor against high stress days.
@@ -87,6 +86,7 @@ spatiotemporal/
 ![Health & Environment Dashboard](dashboard/screenshots/Screenshot%202026-03-15%20at%2018.04.01.png)
 ![Stress Trends & Analysis](dashboard/screenshots/Screenshot%202026-03-15%20at%2018.04.35.png)
 ![Relationships & HRV](dashboard/screenshots/Screenshot%202026-03-15%20at%2018.38.38.png)
+![Model Results](dashboard/screenshots/Screenshot%202026-03-15%20at%2018.42.04.png)
 
 ---
 
