@@ -12,6 +12,11 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from google.cloud import bigquery
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 # Config
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -527,6 +532,90 @@ fig_cal.update_layout(
     margin=dict(l=40, r=40, t=50, b=20)
 )
 st.plotly_chart(fig_cal, use_container_width=True)
+
+# Model Metrics
+st.header("Model Results")
+
+model_features = ['charged', 'drained', 'net_battery', 'resting_hr',
+                  'sleep_hours', 'deep_sleep_hours', 'rem_sleep_hours', 'sleep_body_battery_change']
+model_data = df_filtered[model_features + ['avg_stress']].dropna()
+
+if len(model_data) > 30:
+    X_raw = model_data[model_features]
+    y_binary = (model_data['avg_stress'] > 50).astype(int)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_raw)
+
+    col1, col2, col3 = st.columns(3)
+
+    # --- Logistic Regression coefficients ---
+    with col1:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_scaled, y_binary, test_size=0.2, random_state=42, stratify=y_binary
+        )
+        lr = LogisticRegression(max_iter=1000, C=0.1)
+        lr.fit(X_train, y_train)
+        train_acc = lr.score(X_train, y_train)
+        test_acc = lr.score(X_test, y_test)
+
+        coef_df = pd.DataFrame({
+            'feature': model_features,
+            'coefficient': lr.coef_[0]
+        }).sort_values('coefficient')
+
+        colors = ['mediumseagreen' if c < 0 else 'coral' for c in coef_df['coefficient']]
+        fig_coef = go.Figure(go.Bar(
+            x=coef_df['coefficient'], y=coef_df['feature'],
+            orientation='h', marker_color=colors
+        ))
+        fig_coef.update_layout(
+            title=f"Logistic Regression Coefficients<br><sub>Test accuracy: {test_acc:.1%} · Train: {train_acc:.1%} · High stress days: {y_binary.sum()}/{len(y_binary)}</sub>",
+            xaxis_title="Coefficient (green = protective, red = risk)",
+            height=400
+        )
+        st.plotly_chart(fig_coef, use_container_width=True)
+
+    # --- PCA explained variance ---
+    with col2:
+        pca = PCA()
+        pca.fit(X_scaled)
+        evr = pca.explained_variance_ratio_[:6] * 100
+        cumulative = np.cumsum(evr)
+
+        fig_pca = go.Figure()
+        fig_pca.add_trace(go.Bar(
+            x=[f'PC{i+1}' for i in range(len(evr))],
+            y=evr, name='Individual', marker_color='steelblue'
+        ))
+        fig_pca.add_trace(go.Scatter(
+            x=[f'PC{i+1}' for i in range(len(evr))],
+            y=cumulative, name='Cumulative',
+            mode='lines+markers', line=dict(color='coral'), yaxis='y2'
+        ))
+        fig_pca.update_layout(
+            title=f"PCA Explained Variance<br><sub>PC1: {evr[0]:.1f}% · PC1+PC2: {cumulative[1]:.1f}% · 3 PCs: {cumulative[2]:.1f}%</sub>",
+            yaxis=dict(title='Variance Explained (%)'),
+            yaxis2=dict(title='Cumulative (%)', overlaying='y', side='right'),
+            height=400, legend=dict(orientation='h')
+        )
+        st.plotly_chart(fig_pca, use_container_width=True)
+
+    # --- Feature correlations with stress ---
+    with col3:
+        corr_vals = [(f, model_data[f].corr(model_data['avg_stress'])) for f in model_features]
+        corr_df = pd.DataFrame(corr_vals, columns=['feature', 'correlation']).sort_values('correlation')
+        colors_corr = ['mediumseagreen' if c < 0 else 'coral' for c in corr_df['correlation']]
+        fig_corr = go.Figure(go.Bar(
+            x=corr_df['correlation'], y=corr_df['feature'],
+            orientation='h', marker_color=colors_corr
+        ))
+        fig_corr.update_layout(
+            title="Feature Correlation with Stress<br><sub>green = reduces stress · red = increases stress</sub>",
+            xaxis_title="Pearson r",
+            height=400
+        )
+        st.plotly_chart(fig_corr, use_container_width=True)
 
 # Monthly Summary
 st.header("Monthly Summary")

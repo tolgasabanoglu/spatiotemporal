@@ -82,6 +82,14 @@ spatiotemporal/
 
 ---
 
+## Dashboard
+
+![Health & Environment Dashboard](dashboard/screenshots/Screenshot%202026-03-15%20at%2018.04.01.png)
+![Stress Trends & Analysis](dashboard/screenshots/Screenshot%202026-03-15%20at%2018.04.35.png)
+![Relationships & HRV](dashboard/screenshots/Screenshot%202026-03-15%20at%2018.38.38.png)
+
+---
+
 ## Stack
 
 Python · scikit-learn · BigQuery · Streamlit · Google Earth Engine · Plotly
