@@ -31,6 +31,8 @@ Key finding: charged body battery is the strongest protective factor against hig
 
 ### Part 2 — Café Recommendation
 
+> **TODO:** Add new LAP Coffee locations
+
 ```
 LAP Coffee locations + environmental data → K-Means clustering → mood labels
 Garmin biometrics (lagged) → mood classifier → café ranking
